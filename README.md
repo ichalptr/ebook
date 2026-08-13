@@ -4,6 +4,33 @@ Perpustakaan Digital Interaktif Desa Pamulihan, Kecamatan Pamulihan, Kabupaten S
 Project KKN — PHP Native + MySQL + Bootstrap 5, dengan reader PDF ala buku asli (PDF.js) dan
 import metadata buku otomatis dari Google Books API.
 
+## 0. Tampilan (UI/UX) — apa yang baru
+
+Seluruh tampilan sudah dirombak dengan satu sistem desain terpusat, terinspirasi lanskap
+Desa Pamulihan (sawah berundak, kanopi hutan) dipadukan dengan nuansa "buku & kertas":
+
+- **`assets/css/style.css`** — satu file token desain (warna, tipografi, radius, shadow) yang
+  meng-override kelas Bootstrap (`.btn-success`, `.bg-success`, `.badge`, dst) secara global, jadi
+  seluruh halaman — termasuk semua halaman admin CRUD — otomatis ikut tema baru tanpa perlu
+  diedit satu-satu.
+- **Font**: judul pakai *Fraunces* (serif hangat), teks pakai *Plus Jakarta Sans*.
+- **`includes/cover_helper.php`** — cover buku yang belum punya gambar sekarang otomatis dapat
+  cover gradient + inisial judul (bukan lagi kotak abu-abu `via.placeholder.com`), mengikuti
+  pendekatan yang sama seperti versi Next.js.
+- **`includes/terrace_divider.php`** — motif "sawah berundak" sebagai elemen visual signature di
+  hero halaman depan dan footer.
+- **Kartu buku** sekarang menampilkan cuplikan sinopsis saat di-hover (desktop) di katalog & beranda.
+- **Beranda**: baris "Buku Terbaru"/"Buku Populer" jadi scroll horizontal di layar HP agar hemat tempat.
+- **Reader (`baca.php`)**: ada indikator loading saat PDF sedang disiapkan.
+- **Sidebar admin**: menu dikelompokkan (Ringkasan / Konten / Impor Data / Pengguna) agar tidak
+  terasa panjang menumpuk.
+- **Auth pages** (`login.php`, `register.php`, `setup_admin.php`): kartu form terpusat dengan
+  brand yang konsisten.
+- Semua *empty state* (belum ada buku, hasil pencarian kosong, dst) sekarang punya ikon + pesan
+  yang lebih ramah, bukan teks polos.
+
+Tidak ada perubahan pada skema database atau alur fitur — murni tampilan.
+
 ## 1. Kebutuhan
 - PHP 8.0+ (pakai `match`, jadi minimal PHP 8.0)
 - MySQL/MariaDB
@@ -33,20 +60,20 @@ import metadata buku otomatis dari Google Books API.
 ```
 pamulihan-elibrary/
 ├── config/db.php          # koneksi database & konstanta path
-├── includes/               # header, footer, auth, admin layout
+├── includes/               # header, footer, auth, admin layout, cover & terrace helper
 ├── admin/                  # dashboard admin (CRUD buku, kategori, user, import)
 ├── ajax/                   # endpoint AJAX (simpan progress baca, favorit)
 ├── uploads/covers/         # cover buku ter-upload
 ├── uploads/books/          # file PDF buku ter-upload
-├── assets/                 # CSS & JS
+├── assets/                 # CSS & JS (design system di assets/css/style.css)
 ├── index.php                Beranda
-├── katalog.php              Pencarian & filter buku
-├── detail.php                Detail buku
-├── baca.php                  Reader PDF (PDF.js, progress otomatis tersimpan)
+├── katalog.php               Pencarian & filter buku
+├── detail.php                 Detail buku
+├── baca.php                    Reader PDF (PDF.js, progress otomatis tersimpan)
 ├── login.php / register.php / logout.php
-├── rak_saya.php              Favorit & lanjutkan membaca (siswa)
-├── setup_admin.php           Setup admin pertama (hapus setelah dipakai!)
-└── database.sql              Skema database + data awal
+├── rak_saya.php                Favorit & lanjutkan membaca (siswa)
+├── setup_admin.php             Setup admin pertama (hapus setelah dipakai!)
+└── database.sql                Skema database + data awal
 ```
 
 ## 4. Alur Pemakaian
@@ -137,4 +164,3 @@ Sumber tambahan (gunakan dengan bijak, selalu utamakan yang resmi Kemendikdasmen
 - Rumah Belajar (bse.kemdikbud.go.id) — arsip BSE lama, kurikulum KTSP/K13.
 - Mirror non-resmi seperti bukusekolahdigital.com — bersumber dari BSE resmi, tapi verifikasi dulu
   kesesuaian kurikulumnya sebelum dipakai.
-

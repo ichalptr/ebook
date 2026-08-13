@@ -7,10 +7,6 @@ $results = [];
 $query = trim($_GET['q'] ?? '');
 $importMsg = '';
 
-/**
- * Cari buku via Google Books API (gratis, tanpa API key untuk pemakaian ringan).
- * Dokumentasi: https://developers.google.com/books/docs/v1/using
- */
 function search_google_books(string $query): array {
     $url = 'https://www.googleapis.com/books/v1/volumes?q=' . urlencode($query) . '&maxResults=12&langRestrict=id';
     $ch = curl_init($url);
@@ -49,7 +45,6 @@ if ($query) {
     $results = search_google_books($query);
 }
 
-// Proses import buku terpilih
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'import') {
     csrf_check();
     $categoryId = $_POST['category_id'] ?: null;
@@ -68,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'impor
         ':d'    => $_POST['description'],
         ':g'    => $grade,
         ':c'    => $categoryId,
-        ':cov'  => $_POST['cover'], // disimpan sebagai URL langsung dari Google Books
+        ':cov'  => $_POST['cover'],
         ':pc'   => (int)($_POST['page_count'] ?: 0),
         ':ext'  => $_POST['external_id'],
     ]);

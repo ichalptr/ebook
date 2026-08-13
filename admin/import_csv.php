@@ -22,7 +22,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'impor
             $log[] = "⚠️ Gagal membuka file CSV.";
         } else {
             $header = fgetcsv($handle);
-            // Normalisasi nama kolom: lowercase, trim
             $header = array_map(fn($h) => strtolower(trim($h)), $header);
             $expected = ['title','author','publisher','year','isbn','description','grade_level','category','cover_url','pdf_url','downloadable'];
 
@@ -34,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'impor
             $rowNum = 1;
             while (($row = fgetcsv($handle)) !== false) {
                 $rowNum++;
-                if (count(array_filter($row)) === 0) continue; // baris kosong
+                if (count(array_filter($row)) === 0) continue;
 
                 $data = array_combine($header, array_pad($row, count($header), ''));
 

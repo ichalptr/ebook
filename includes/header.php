@@ -9,6 +9,9 @@ $user = current_user();
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= isset($page_title) ? htmlspecialchars($page_title) . ' — ' : '' ?>Pamulihan E-Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 <link href="<?= BASE_URL ?>/assets/css/style.css" rel="stylesheet">
@@ -17,7 +20,7 @@ $user = current_user();
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-success sticky-top shadow-sm">
   <div class="container">
-    <a class="navbar-brand fw-bold" href="<?= BASE_URL ?>/index.php">
+    <a class="navbar-brand" href="<?= BASE_URL ?>/index.php">
       <i class="bi bi-book-half"></i> Pamulihan E-Library
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">

@@ -8,7 +8,6 @@ function slugify(string $text): string {
     return trim($text, '-');
 }
 
-// Tambah kategori
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add') {
     csrf_check();
     $name = trim($_POST['name'] ?? '');
@@ -20,14 +19,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add')
     exit;
 }
 
-// Hapus kategori
 if (($_GET['delete'] ?? null)) {
     $pdo->prepare("DELETE FROM categories WHERE id = :id")->execute([':id' => (int)$_GET['delete']]);
     header('Location: ' . BASE_URL . '/admin/categories.php');
     exit;
 }
 
-// Edit kategori
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'edit') {
     csrf_check();
     $id = (int)$_POST['id'];

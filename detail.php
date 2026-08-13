@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/cover_helper.php';
 
 $id = (int)($_GET['id'] ?? 0);
 $stmt = $pdo->prepare("SELECT b.*, c.name AS category_name FROM books b
@@ -10,8 +11,8 @@ $book = $stmt->fetch();
 
 if (!$book) {
     http_response_code(404);
-    echo '<div class="container py-5 text-center"><h4>Buku tidak ditemukan.</h4>
-          <a href="' . BASE_URL . '/katalog.php" class="btn btn-success mt-3">Kembali ke Katalog</a></div>';
+    echo '<div class="container py-5 text-center empty-state"><i class="bi bi-emoji-frown"></i><h4 class="mt-2">Buku tidak ditemukan.</h4>
+          <a href="' . BASE_URL . '/katalog.php" class="btn btn-brand mt-3">Kembali ke Katalog</a></div>';
     require_once __DIR__ . '/includes/footer.php';
     exit;
 }
@@ -30,23 +31,17 @@ if ($user) {
     $r->execute([':u' => $user['id'], ':b' => $id]);
     $progress = $r->fetch();
 }
-
-function book_cover_src(array $book): string {
-    if (!empty($book['cover_image'])) {
-        if (filter_var($book['cover_image'], FILTER_VALIDATE_URL)) return htmlspecialchars($book['cover_image']);
-        return UPLOAD_COVER_URL . htmlspecialchars($book['cover_image']);
-    }
-    return 'https://via.placeholder.com/300x450/1f7a3d/ffffff?text=' . urlencode($book['title']);
-}
 ?>
 
 <div class="container py-4">
   <div class="row g-4">
     <div class="col-md-3">
-      <img src="<?= book_cover_src($book) ?>" class="img-fluid rounded shadow-sm w-100" alt="<?= htmlspecialchars($book['title']) ?>">
+      <div class="book-cover-wrap rounded-4 shadow-sm w-100">
+        <?= book_cover_html($book) ?>
+      </div>
     </div>
     <div class="col-md-9">
-      <span class="badge bg-success mb-2"><?= htmlspecialchars($book['category_name'] ?? 'Tanpa kategori') ?></span>
+      <span class="badge bg-success-subtle text-success-emphasis mb-2"><?= htmlspecialchars($book['category_name'] ?? 'Tanpa kategori') ?></span>
       <span class="badge bg-secondary mb-2"><?= htmlspecialchars($book['grade_level']) ?></span>
       <h2><?= htmlspecialchars($book['title']) ?></h2>
       <p class="text-muted mb-1">Penulis: <?= htmlspecialchars($book['author'] ?? '-') ?></p>
@@ -65,7 +60,7 @@ function book_cover_src(array $book): string {
 
       <div class="d-flex gap-2 flex-wrap">
         <?php if ($book['file_path']): ?>
-          <a href="<?= BASE_URL ?>/baca.php?id=<?= $book['id'] ?>" class="btn btn-success btn-lg">
+          <a href="<?= BASE_URL ?>/baca.php?id=<?= $book['id'] ?>" class="btn btn-brand btn-lg">
             <i class="bi bi-book"></i> <?= $progress ? 'Lanjutkan Membaca' : 'Baca Buku' ?>
           </a>
         <?php else: ?>

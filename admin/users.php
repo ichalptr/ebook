@@ -4,7 +4,7 @@ require_once __DIR__ . '/../includes/admin_header.php';
 
 if (($_GET['delete'] ?? null)) {
     $delId = (int)$_GET['delete'];
-    if ($delId !== (int)$_SESSION['user_id']) { // jangan hapus diri sendiri
+    if ($delId !== (int)$_SESSION['user_id']) {
         $pdo->prepare("DELETE FROM users WHERE id = :id")->execute([':id' => $delId]);
     }
     header('Location: ' . BASE_URL . '/admin/users.php');

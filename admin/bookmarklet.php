@@ -2,9 +2,6 @@
 $page_title = 'Bookmarklet Import';
 require_once __DIR__ . '/../includes/admin_header.php';
 
-// Bookmarklet: dijalankan di BROWSER admin sendiri, saat admin sedang membuka
-// halaman detail buku (misal di SIBI). Membaca info di halaman yang SEDANG DIBUKA
-// (bukan crawling otomatis), lalu membuka tab baru ke quick_add.php dengan data terisi.
 $bookmarkletJs = <<<'JS'
 (function(){
   function meta(name){
@@ -53,8 +50,8 @@ $bookmarkletHref = 'javascript:' . rawurlencode(preg_replace('/\s+/', ' ', $book
     klik. Tetap satu klik per buku, tapi kamu tidak perlu copy-paste manual judul/cover/link satu-satu.
   </div>
 
-  <div class="text-center my-4 p-4" style="background:#f4f6f5;border-radius:8px;">
-    <a href="<?= htmlspecialchars($bookmarkletHref) ?>" class="btn btn-lg btn-success" onclick="return false;" draggable="true">
+  <div class="text-center my-4 p-4" style="background:var(--parchment-dark);border-radius:8px;">
+    <a href="<?= htmlspecialchars($bookmarkletHref) ?>" class="btn btn-lg btn-success" onclick="return false;" draggable="true" role="button">
       <i class="bi bi-bookmark-plus"></i> 📚 Clip ke E-Library
     </a>
     <p class="small text-muted mt-2 mb-0"><strong>Seret tombol ini</strong> ke bar bookmark browser kamu (jangan diklik di sini).</p>

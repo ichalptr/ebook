@@ -2,10 +2,6 @@
 $page_title = 'Bulk Import Buku';
 require_once __DIR__ . '/../includes/admin_header.php';
 
-/**
- * Query pencarian per kategori — silakan tambah/ubah sesuai kebutuhan sekolah.
- * Setiap entri: [query pencarian, nama kategori (harus ada di tabel categories), jenjang]
- */
 $presetQueries = [
     ['dongeng anak indonesia', 'Cerita', 'SD'],
     ['cerita rakyat nusantara', 'Cerita', 'SD'],
@@ -67,7 +63,6 @@ $skipped = 0;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'bulk_run') {
     csrf_check();
 
-    // Peta nama kategori -> id, ambil dari database (buat otomatis kalau belum ada)
     $catStmt = $pdo->query("SELECT id, name FROM categories");
     $catMap = [];
     foreach ($catStmt->fetchAll() as $c) $catMap[$c['name']] = $c['id'];
@@ -95,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'bulk_
             $checkStmt->execute([':ext' => $r['external_id']]);
             if ($checkStmt->fetch()) {
                 $skipped++;
-                continue; // sudah pernah diimpor
+                continue;
             }
             $insertStmt->execute([
                 ':t' => $r['title'], ':a' => $r['author'], ':pub' => $r['publisher'],
