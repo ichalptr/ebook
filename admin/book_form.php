@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$title) {
         $error = 'Judul wajib diisi.';
     } else {
+        // Upload cover (opsional)
         if (!empty($_FILES['cover']['name'])) {
             $ext = strtolower(pathinfo($_FILES['cover']['name'], PATHINFO_EXTENSION));
             if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
@@ -48,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // Upload file PDF (opsional) — atau pakai link eksternal (misal dari SIBI)
         $fileUrlInput = trim($_POST['file_url'] ?? '');
         if ($fileUrlInput) {
             if (filter_var($fileUrlInput, FILTER_VALIDATE_URL)) {

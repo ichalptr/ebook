@@ -6,6 +6,7 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name")->fetchAll();
 $error = '';
 $success = false;
 
+// Data terisi otomatis dari parameter bookmarklet (GET) atau input manual admin (POST)
 $prefill = [
     'title'       => trim($_GET['title'] ?? $_POST['title'] ?? ''),
     'cover'       => trim($_GET['cover'] ?? $_POST['cover'] ?? ''),

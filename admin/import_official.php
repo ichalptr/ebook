@@ -2,6 +2,12 @@
 $page_title = 'Import Resmi Kemendikdasmen';
 require_once __DIR__ . '/../includes/admin_header.php';
 
+/**
+ * Sumber: Data Buku (BTP) — Data Acuan SIPLah, Pusat Perbukuan Kemendikdasmen.
+ * Data ini TERBUKA & bisa diakses otomatis (bukan API SIBI yang tertutup).
+ * Hanya berisi METADATA resmi (judul, penulis, penerbit, mapel, jenjang, cover) — TANPA file PDF.
+ * Dokumentasi: https://wartek-id.gitlab.io/sds/sds/siplah/docs/references/books/
+ */
 const SIPLAH_BASE = 'https://siplah.kemendikdasmen.go.id/sds/lookup-tables/msts/books/';
 
 function fetch_json(string $path): array {
@@ -19,6 +25,7 @@ function fetch_json(string $path): array {
 }
 
 function cache_get(string $key, callable $fetcher): array {
+    // Cache sederhana berbasis file supaya tidak fetch berulang ke server pemerintah tiap request.
     $file = sys_get_temp_dir() . '/siplah_' . $key . '.json';
     if (file_exists($file) && (time() - filemtime($file) < 86400)) {
         return json_decode(file_get_contents($file), true) ?: [];
@@ -36,6 +43,7 @@ $schoolLevelMap = array_column($schoolLevels, 'name', 'id');
 $subjectMap     = array_column($subjects, 'name', 'id');
 $publisherMap   = array_column($publishers, 'name', 'id');
 
+// Peta jenjang SIPLah -> jenjang di database kita
 function map_grade(string $levelName): string {
     if (str_contains($levelName, 'SD')) return 'SD';
     if (str_contains($levelName, 'SMP')) return 'SMP';
@@ -78,6 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'impor
         $subjectName = $subjectMap[$book['subjectId'] ?? ''] ?? '';
         $publisherName = $publisherMap[$book['publisherId'] ?? ''] ?? '';
         $cover = $book['physicalDescription']['coverImage'] ?? '';
+        // Cover placeholder pemerintah (no-image) jangan disimpan
         if (str_contains($cover, 'no-image-available')) $cover = '';
 
         $categoryId = $catMap[strtolower($subjectName)] ?? null;
@@ -109,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($selectedLevel || $selectedSubjectK
         }
         if ($searchTitle && stripos($b['title'], $searchTitle) === false) continue;
         $results[] = $b;
-        if (count($results) >= 60) break;
+        if (count($results) >= 60) break; // batasi tampilan
     }
 }
 ?>

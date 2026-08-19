@@ -31,13 +31,33 @@ $fileUrl = filter_var($book['file_path'], FILTER_VALIDATE_URL)
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Membaca — <?= htmlspecialchars($book['title']) ?></title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-<link href="<?= BASE_URL ?>/assets/css/style.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Plus+Jakarta+Sans:wght@500;600&display=swap" rel="stylesheet">
 <style>
-  body { background:#24352a; margin:0; font-family:'Plus Jakarta Sans', sans-serif; }
+  :root { --forest-900:#14261C; --forest-700:#1F4D3A; --turmeric-400:#E3A93E; --clay-500:#C1512E; }
+  body { background:#20302A; margin:0; font-family:'Plus Jakarta Sans',system-ui,sans-serif; overscroll-behavior:none; }
+  .reader-toolbar { background:var(--forest-900); color:#fff; padding:.6rem .9rem; display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+  .reader-toolbar .title { font-family:'Fraunces',serif; font-weight:600; flex:1; min-width:120px; font-size:1rem; }
+  .reader-toolbar .btn { border-radius:999px; }
+  #pdf-container { display:flex; justify-content:center; align-items:flex-start; padding:1.25rem .75rem 5.5rem; min-height:calc(100vh - 60px); overflow:auto; touch-action: pan-y; }
+  .page-flip-wrap { background:#fff; box-shadow:0 20px 50px rgba(0,0,0,.45); border-radius:6px; transition:opacity .2s ease; }
+  #pageCanvas { display:block; max-width:100%; height:auto; border-radius:6px; }
+  .page-flip-wrap.flipping { animation: flipPage .35s ease; }
+  @keyframes flipPage {
+    0%   { transform: rotateY(0deg) scale(1);   opacity: 1; }
+    45%  { transform: rotateY(8deg) scale(.99);   opacity: .6; }
+    100% { transform: rotateY(0deg) scale(1);   opacity: 1; }
+  }
+  .btn-nav:disabled { opacity:.3; }
+  #pageNum { background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.25); color:#fff; border-radius:6px; }
+  .swipe-hint { position:fixed; bottom:70px; left:50%; transform:translateX(-50%); background:rgba(20,38,28,.85); color:#fff; font-size:.75rem; padding:.5rem 1rem; border-radius:999px; opacity:0; transition:opacity .3s ease; pointer-events:none; z-index:50; }
+  .swipe-hint.show { opacity:1; }
+  @media (max-width:576px) {
+    .reader-toolbar .title { order:1; width:100%; text-align:center; margin-bottom:.25rem; }
+    .reader-toolbar { justify-content:center; }
+  }
 </style>
 </head>
 <body>
@@ -63,12 +83,8 @@ $fileUrl = filter_var($book['file_path'], FILTER_VALIDATE_URL)
   <div id="readProgress" class="progress-bar bg-success" style="width:0%"></div>
 </div>
 
-<div id="pdf-container" style="position:relative;">
-  <div class="reader-loading" id="readerLoading">
-    <div class="spinner-border" role="status"></div>
-    <span>Menyiapkan halaman buku…</span>
-  </div>
-  <div class="page-flip-wrap d-none" id="flipWrap">
+<div id="pdf-container">
+  <div class="page-flip-wrap" id="flipWrap">
     <canvas id="pageCanvas"></canvas>
   </div>
 </div>
@@ -88,7 +104,6 @@ let saveTimeout = null;
 const canvas = document.getElementById('pageCanvas');
 const ctx = canvas.getContext('2d');
 const flipWrap = document.getElementById('flipWrap');
-const loadingEl = document.getElementById('readerLoading');
 
 function renderPage(num, animate = true) {
   if (rendering) return;
@@ -156,15 +171,48 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft') document.getElementById('prevPage').click();
 });
 
+// Navigasi swipe (mobile): geser kiri = halaman berikutnya, geser kanan = sebelumnya
+(function () {
+  const container = document.getElementById('pdf-container');
+  const hint = document.createElement('div');
+  hint.className = 'swipe-hint';
+  hint.textContent = 'Geser untuk ganti halaman';
+  document.body.appendChild(hint);
+
+  let startX = 0, startY = 0, tracking = false;
+
+  container.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    tracking = true;
+  }, { passive: true });
+
+  container.addEventListener('touchend', (e) => {
+    if (!tracking) return;
+    tracking = false;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx < 0) document.getElementById('nextPage').click();
+      else document.getElementById('prevPage').click();
+    }
+  }, { passive: true });
+
+  // Tampilkan hint sekali di perangkat sentuh
+  if ('ontouchstart' in window) {
+    setTimeout(() => hint.classList.add('show'), 800);
+    setTimeout(() => hint.classList.remove('show'), 3200);
+  }
+})();
+
 pdfjsLib.getDocument(url).promise.then(function (doc) {
   pdfDoc = doc;
   document.getElementById('pageCount').textContent = doc.numPages;
   pageNum = Math.min(pageNum, doc.numPages);
-  loadingEl.remove();
-  flipWrap.classList.remove('d-none');
   renderPage(pageNum, false);
 }).catch(function (err) {
-  loadingEl.innerHTML = '<p class="text-light mb-0">Gagal memuat file PDF: ' + err.message + '</p>';
+  document.getElementById('pdf-container').innerHTML =
+    '<p class="text-light">Gagal memuat file PDF: ' + err.message + '</p>';
 });
 </script>
 </body>

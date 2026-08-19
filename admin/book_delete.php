@@ -10,6 +10,7 @@ if ($id) {
     $book = $stmt->fetch();
 
     if ($book) {
+        // Hapus file fisik jika ada dan bukan URL eksternal
         if ($book['cover_image'] && !filter_var($book['cover_image'], FILTER_VALIDATE_URL)) {
             @unlink(UPLOAD_COVER_DIR . $book['cover_image']);
         }

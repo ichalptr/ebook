@@ -9,7 +9,8 @@ define('DB_NAME', 'pamulihan_elibrary');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 
-define('BASE_URL', 'http://localhost/pamulihan-elibrary');
+// Path dasar untuk upload (dipakai di admin & reader)
+define('BASE_URL', 'http://localhost/ebook');
 define('UPLOAD_COVER_DIR', __DIR__ . '/../uploads/covers/');
 define('UPLOAD_BOOK_DIR', __DIR__ . '/../uploads/books/');
 define('UPLOAD_COVER_URL', BASE_URL . '/uploads/covers/');

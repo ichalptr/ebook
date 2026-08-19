@@ -1,15 +1,32 @@
-// Pamulihan E-Library — script umum
+// Pamulihan E-Library — interaksi umum
 document.addEventListener('DOMContentLoaded', function () {
-  // Tooltip Bootstrap (jika ada elemen data-bs-toggle="tooltip")
-  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-  tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+  // Tooltip Bootstrap
+  document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
 
-  // Fade-in halus untuk gambar cover saat sudah selesai dimuat,
-  // supaya transisi dari kartu kosong -> cover terasa lebih rapi.
-  document.querySelectorAll('.book-cover-wrap img').forEach(img => {
-    if (img.complete) return;
-    img.style.opacity = 0;
-    img.style.transition = 'opacity .25s ease';
-    img.addEventListener('load', () => { img.style.opacity = 1; });
-  });
+  // Scroll reveal untuk elemen .reveal (kartu buku, dsb.)
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal').forEach((el, i) => {
+      el.style.transitionDelay = Math.min(i * 40, 300) + 'ms';
+      io.observe(el);
+    });
+  } else {
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('is-visible'));
+  }
+
+  // Highlight kategori aktif (chip) berdasarkan query string
+  const params = new URLSearchParams(location.search);
+  const activeCat = params.get('category');
+  if (activeCat) {
+    document.querySelectorAll('.chip').forEach(chip => {
+      if (chip.href.includes('category=' + activeCat)) chip.classList.add('active');
+    });
+  }
 });

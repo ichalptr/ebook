@@ -50,6 +50,7 @@ function logout_user(): void {
     session_destroy();
 }
 
+/** Proteksi CSRF sederhana untuk form admin */
 function csrf_token(): string {
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));

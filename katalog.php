@@ -1,34 +1,20 @@
 <?php
 $page_title = 'Katalog Buku';
 require_once __DIR__ . '/includes/header.php';
-require_once __DIR__ . '/includes/cover_helper.php';
-require_once __DIR__ . '/includes/book_card_helper.php'; // <-- NEW
 
 $q          = trim($_GET['q'] ?? '');
 $categoryId = isset($_GET['category']) ? (int)$_GET['category'] : 0;
 $grade      = $_GET['grade'] ?? '';
 $sort       = $_GET['sort'] ?? 'newest';
-$page       = (int)($_GET['page'] ?? 1);
-$perPage    = 24;
-$offset     = ($page - 1) * $perPage;
 
 $sql = "SELECT b.*, c.name AS category_name FROM books b
         LEFT JOIN categories c ON c.id = b.category_id
         WHERE 1=1";
 $params = [];
 
-if ($q !== '') {
-    $sql .= " AND (b.title LIKE :q OR b.author LIKE :q)";
-    $params[':q'] = '%' . $q . '%';
-}
-if ($categoryId > 0) {
-    $sql .= " AND b.category_id = :cat";
-    $params[':cat'] = $categoryId;
-}
-if ($grade !== '') {
-    $sql .= " AND b.grade_level = :grade";
-    $params[':grade'] = $grade;
-}
+if ($q !== '') { $sql .= " AND (b.title LIKE :q OR b.author LIKE :q)"; $params[':q'] = '%' . $q . '%'; }
+if ($categoryId > 0) { $sql .= " AND b.category_id = :cat"; $params[':cat'] = $categoryId; }
+if ($grade !== '') { $sql .= " AND b.grade_level = :grade"; $params[':grade'] = $grade; }
 
 $sql .= match ($sort) {
     'popular' => " ORDER BY b.views DESC",
@@ -36,49 +22,37 @@ $sql .= match ($sort) {
     default   => " ORDER BY b.created_at DESC",
 };
 
-// ---- PAGINATION ----
-$countSql = str_replace("SELECT b.*, c.name AS category_name", "SELECT COUNT(*)", $sql);
-$countStmt = $pdo->prepare($countSql);
-$countStmt->execute($params);
-$totalBooks = $countStmt->fetchColumn();
-$totalPages = ceil($totalBooks / $perPage);
-
-$sql .= " LIMIT :limit OFFSET :offset";
-$params[':limit'] = $perPage;
-$params[':offset'] = $offset;
-// ---- END PAGINATION ----
-
 $stmt = $pdo->prepare($sql);
-foreach ($params as $key => $val) {
-    if ($key === ':limit' || $key === ':offset') {
-        $stmt->bindValue($key, $val, PDO::PARAM_INT);
-    } else {
-        $stmt->bindValue($key, $val);
-    }
-}
-$stmt->execute();
+$stmt->execute($params);
 $books = $stmt->fetchAll();
 
 $categories = $pdo->query("SELECT * FROM categories ORDER BY name")->fetchAll();
+
+function book_cover_src(array $book): string {
+    if (!empty($book['cover_image'])) {
+        if (filter_var($book['cover_image'], FILTER_VALIDATE_URL)) return htmlspecialchars($book['cover_image']);
+        return UPLOAD_COVER_URL . htmlspecialchars($book['cover_image']);
+    }
+    return 'https://via.placeholder.com/300x450/1F4D3A/FAF6EC?text=' . urlencode($book['title']);
+}
 ?>
 
 <div class="container py-4">
-  <div class="section-heading">
-    <span class="kicker">Cari &amp; jelajahi</span>
-  </div>
-  <h3 class="mb-4"><i class="bi bi-search"></i> Katalog Buku</h3>
+  <div class="section-label mb-2">Temukan Bacaan</div>
+  <h3 class="mb-4">Katalog Buku</h3>
 
-  <form method="get" class="row g-2 mb-4">
+  <form method="get" class="row g-2 mb-4 sticky-top py-2" style="top:70px; background:var(--sand-100); z-index:10;">
     <div class="col-md-4">
-      <input type="text" name="q" class="form-control" placeholder="Cari judul atau penulis..." value="<?= htmlspecialchars($q) ?>">
+      <div class="input-group">
+        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" name="q" class="form-control border-start-0" placeholder="Cari judul atau penulis..." value="<?= htmlspecialchars($q) ?>">
+      </div>
     </div>
     <div class="col-md-3">
       <select name="category" class="form-select">
         <option value="0">Semua Kategori</option>
         <?php foreach ($categories as $cat): ?>
-          <option value="<?= $cat['id'] ?>" <?= $categoryId === (int)$cat['id'] ? 'selected' : '' ?>>
-            <?= htmlspecialchars($cat['name']) ?>
-          </option>
+          <option value="<?= $cat['id'] ?>" <?= $categoryId === (int)$cat['id'] ? 'selected' : '' ?>><?= htmlspecialchars($cat['name']) ?></option>
         <?php endforeach; ?>
       </select>
     </div>
@@ -98,48 +72,39 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name")->fetchAll();
       </select>
     </div>
     <div class="col-md-1">
-      <button class="btn btn-brand w-100"><i class="bi bi-funnel"></i></button>
+      <button class="btn btn-forest w-100"><i class="bi bi-funnel"></i></button>
     </div>
   </form>
 
-  <p class="text-muted"><?= $totalBooks ?> buku ditemukan<?= $q !== '' ? ' untuk "' . htmlspecialchars($q) . '"' : '' ?></p>
+  <p class="text-muted"><?= count($books) ?> buku ditemukan</p>
 
   <div class="row g-3">
-    <?php foreach ($books as $b): render_book_card($b, 'col-6 col-md-3 col-lg-2'); endforeach; ?>
+    <?php foreach ($books as $b): ?>
+      <div class="col-6 col-md-3 col-lg-2">
+        <a href="<?= BASE_URL ?>/detail.php?id=<?= (int)$b['id'] ?>" class="text-decoration-none text-dark">
+          <div class="card book-card reveal">
+            <div class="book-cover-wrap">
+              <img src="<?= book_cover_src($b) ?>" alt="<?= htmlspecialchars($b['title']) ?>" loading="lazy">
+              <i class="bi bi-bookmark-fill fold-icon"></i>
+            </div>
+            <div class="card-body p-2">
+              <span class="badge badge-grade mb-1"><?= htmlspecialchars($b['grade_level']) ?></span>
+              <h6 class="mb-0 text-truncate"><?= htmlspecialchars($b['title']) ?></h6>
+              <small class="text-muted text-truncate d-block"><?= htmlspecialchars($b['author'] ?? '-') ?></small>
+            </div>
+          </div>
+        </a>
+      </div>
+    <?php endforeach; ?>
 
     <?php if (!$books): ?>
-      <div class="col-12">
-        <div class="empty-state">
-          <i class="bi bi-inbox"></i>
-          <p class="mt-2 mb-1 fw-semibold">Tidak ada buku yang cocok.</p>
-          <p class="small mb-0">Coba ubah kata kunci, kategori, atau jenjang pencarianmu.</p>
-        </div>
+      <div class="col-12 text-center text-muted py-5">
+        <i class="bi bi-inbox display-4"></i>
+        <p class="mt-2">Tidak ada buku yang cocok dengan pencarian kamu.</p>
+        <a href="<?= BASE_URL ?>/katalog.php" class="btn btn-outline-forest btn-sm">Reset Filter</a>
       </div>
     <?php endif; ?>
   </div>
-
-  <?php if ($totalPages > 1): ?>
-  <nav aria-label="Navigasi halaman" class="mt-4">
-    <ul class="pagination justify-content-center">
-      <?php if ($page > 1): ?>
-        <li class="page-item">
-          <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => $page-1])) ?>" aria-label="Sebelumnya">«</a>
-        </li>
-      <?php endif; ?>
-      <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-        <li class="page-item <?= $i === $page ? 'active' : '' ?>">
-          <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => $i])) ?>"><?= $i ?></a>
-        </li>
-      <?php endfor; ?>
-      <?php if ($page < $totalPages): ?>
-        <li class="page-item">
-          <a class="page-link" href="?<?= http_build_query(array_merge($_GET, ['page' => $page+1])) ?>" aria-label="Selanjutnya">»</a>
-        </li>
-      <?php endif; ?>
-    </ul>
-  </nav>
-  <?php endif; ?>
-
 </div>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
