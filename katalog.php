@@ -1,6 +1,7 @@
 <?php
 $page_title = 'Katalog Buku';
 require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/book_card_helper.php';
 
 $q          = trim($_GET['q'] ?? '');
 $categoryId = isset($_GET['category']) ? (int)$_GET['category'] : 0;
@@ -27,19 +28,17 @@ $stmt->execute($params);
 $books = $stmt->fetchAll();
 
 $categories = $pdo->query("SELECT * FROM categories ORDER BY name")->fetchAll();
-
-function book_cover_src(array $book): string {
-    if (!empty($book['cover_image'])) {
-        if (filter_var($book['cover_image'], FILTER_VALIDATE_URL)) return htmlspecialchars($book['cover_image']);
-        return UPLOAD_COVER_URL . htmlspecialchars($book['cover_image']);
-    }
-    return 'https://via.placeholder.com/300x450/1F4D3A/FAF6EC?text=' . urlencode($book['title']);
-}
+$activeFilterCount = ($q !== '' ? 1 : 0) + ($categoryId > 0 ? 1 : 0) + ($grade !== '' ? 1 : 0);
 ?>
 
 <div class="container py-4">
   <div class="section-label mb-2">Temukan Bacaan</div>
-  <h3 class="mb-4">Katalog Buku</h3>
+  <div class="d-flex justify-content-between align-items-end flex-wrap gap-2 mb-4">
+    <h3 class="mb-0">Katalog Buku</h3>
+    <?php if ($activeFilterCount): ?>
+      <a href="<?= BASE_URL ?>/katalog.php" class="small text-decoration-none"><i class="bi bi-x-circle"></i> Reset <?= $activeFilterCount ?> filter</a>
+    <?php endif; ?>
+  </div>
 
   <form method="get" class="row g-2 mb-4 sticky-top py-2" style="top:70px; background:var(--sand-100); z-index:10;">
     <div class="col-md-4">
@@ -79,25 +78,7 @@ function book_cover_src(array $book): string {
   <p class="text-muted"><?= count($books) ?> buku ditemukan</p>
 
   <div class="row g-3">
-    <?php foreach ($books as $b): ?>
-      <div class="col-6 col-md-3 col-lg-2">
-        <a href="<?= BASE_URL ?>/detail.php?id=<?= (int)$b['id'] ?>" class="text-decoration-none text-dark">
-          <div class="card book-card reveal">
-            <div class="book-cover-wrap">
-              <img src="<?= book_cover_src($b) ?>" alt="<?= htmlspecialchars($b['title']) ?>" loading="lazy">
-              <i class="bi bi-bookmark-fill fold-icon"></i>
-            </div>
-            <div class="card-body p-2">
-              <span class="badge badge-grade mb-1"><?= htmlspecialchars($b['grade_level']) ?></span>
-              <h6 class="mb-0 text-truncate"><?= htmlspecialchars($b['title']) ?></h6>
-              <small class="text-muted text-truncate d-block"><?= htmlspecialchars($b['author'] ?? '-') ?></small>
-            </div>
-          </div>
-        </a>
-      </div>
-    <?php endforeach; ?>
-
-    <?php if (!$books): ?>
+    <?php if ($books): foreach ($books as $b): render_book_card($b, 'col-6 col-md-3 col-lg-2', true); endforeach; else: ?>
       <div class="col-12 text-center text-muted py-5">
         <i class="bi bi-inbox display-4"></i>
         <p class="mt-2">Tidak ada buku yang cocok dengan pencarian kamu.</p>

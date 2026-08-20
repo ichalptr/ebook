@@ -56,6 +56,14 @@
 
 html { scroll-behavior: smooth; }
 
+/* ---------------------------------------------------------------
+   Sticky footer. body is a full-height flex column; includes/header.php
+   opens <main class="site-main"> right after the nav, and footer.php
+   closes it right before <footer>. site-main's flex:1 fills whatever
+   space the page content doesn't use, pushing the footer to the
+   bottom of the viewport even on short pages like login/register.
+   --------------------------------------------------------------- */
+html, body { height: 100%; }
 body {
   background-color: var(--sand-100);
   color: var(--ink-800);
@@ -63,7 +71,12 @@ body {
   font-size: 16px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
+.site-main { flex: 1 0 auto; display: flex; flex-direction: column; }
+.pl-footer { flex-shrink: 0; }
 
 h1, h2, h3, h4, .font-display {
   font-family: var(--font-display);
@@ -311,6 +324,27 @@ a:hover { color: var(--clay-600); }
 }
 .book-cover-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s ease; }
 .book-card:hover .book-cover-wrap img { transform: scale(1.04); }
+.book-card:hover .book-cover-wrap .generated-cover { transform: scale(1.04); }
+
+/* Synopsis hover overlay. Previously .card-synopsis had NO rules
+   anywhere, so it rendered as plain unstyled text flowing inside the
+   cover box — visually stacked/overlapping behind the cover image
+   instead of a proper reveal-on-hover panel. */
+.card-synopsis {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: 1.75rem .65rem .65rem;
+  background: linear-gradient(180deg, rgba(20,38,28,0) 35%, rgba(20,38,28,.92) 100%);
+  color: var(--sand-50);
+  font-size: .72rem;
+  line-height: 1.35;
+  opacity: 0;
+  transition: opacity .2s ease;
+  pointer-events: none;
+}
+.book-card:hover .card-synopsis { opacity: 1; }
 
 /* Dog-ear page fold */
 .book-cover-wrap::after {
@@ -405,3 +439,49 @@ a:hover { color: var(--clay-600); }
 /* Scroll reveal (opt-in via .reveal class + JS toggling .is-visible) */
 .reveal { opacity: 0; transform: translateY(16px); transition: opacity .5s ease, transform .5s ease; }
 .reveal.is-visible { opacity: 1; transform: translateY(0); }
+
+/* ---------------------------------------------------------------
+   cover-media: base class always applied by book_cover_html() (both
+   to the real <img> and to the generated-cover fallback div) so a
+   book cover reliably fills whatever box it's placed in, without
+   every calling page needing to remember its own sizing/object-fit.
+   Callers can still layer an extra class (e.g. row-thumb) on top —
+   later rules in the cascade (like admin.css) can override sizing.
+   --------------------------------------------------------------- */
+.cover-media { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* ---------------------------------------------------------------
+   Generated cover fallback (includes/cover_helper.php). Previously
+   unstyled anywhere, so it rendered as a collapsed 0px box wherever
+   a book had no cover image. Restored so catalog/admin always show
+   a proper gradient-and-initial placeholder instead of empty space.
+   --------------------------------------------------------------- */
+.generated-cover {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: .9rem;
+  color: #fff; position: relative; overflow: hidden;
+}
+.generated-cover::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.07) 0 2px, transparent 2px 12px);
+  pointer-events: none;
+}
+.generated-cover .initial {
+  font-family: var(--font-display); font-weight: 800; font-size: 2rem;
+  line-height: 1; opacity: .95;
+}
+.generated-cover .cover-title {
+  font-size: .68rem; font-weight: 600; margin-top: .5rem;
+  line-height: 1.25; opacity: .88;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* ---------------------------------------------------------------
+   Consistency fix: index.php / katalog.php previously used raw
+   <img src="via.placeholder.com/...">  for missing covers instead
+   of the generated-cover fallback used elsewhere, and via.placeholder.com
+   is an external dependency that can go down. book_cover_html() from
+   cover_helper.php is the single source of truth now (see updated
+   index.php / katalog.php / rak_saya.php / detail.php).
+   --------------------------------------------------------------- */

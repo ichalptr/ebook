@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/cover_helper.php';
 
 $id = (int)($_GET['id'] ?? 0);
 $stmt = $pdo->prepare("SELECT b.*, c.name AS category_name FROM books b
@@ -29,21 +30,23 @@ if ($user) {
     $r->execute([':u' => $user['id'], ':b' => $id]);
     $progress = $r->fetch();
 }
-
-function book_cover_src(array $book): string {
-    if (!empty($book['cover_image'])) {
-        if (filter_var($book['cover_image'], FILTER_VALIDATE_URL)) return htmlspecialchars($book['cover_image']);
-        return UPLOAD_COVER_URL . htmlspecialchars($book['cover_image']);
-    }
-    return 'https://via.placeholder.com/300x450/1F4D3A/FAF6EC?text=' . urlencode($book['title']);
-}
 ?>
 
 <div class="container py-4">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small mb-0">
+      <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/katalog.php" class="text-decoration-none">Katalog</a></li>
+      <?php if ($book['category_name']): ?>
+        <li class="breadcrumb-item"><a href="<?= BASE_URL ?>/katalog.php?category=<?= (int)$book['category_id'] ?>" class="text-decoration-none"><?= htmlspecialchars($book['category_name']) ?></a></li>
+      <?php endif; ?>
+      <li class="breadcrumb-item active text-truncate" style="max-width:260px;" aria-current="page"><?= htmlspecialchars($book['title']) ?></li>
+    </ol>
+  </nav>
+
   <div class="row g-4">
     <div class="col-md-3">
-      <div class="position-relative">
-        <img src="<?= book_cover_src($book) ?>" class="img-fluid rounded shadow w-100" alt="<?= htmlspecialchars($book['title']) ?>" style="aspect-ratio:2/3;object-fit:cover;">
+      <div class="rounded shadow w-100 overflow-hidden" style="aspect-ratio:2/3;">
+        <?= book_cover_html($book) ?>
       </div>
     </div>
     <div class="col-md-9">

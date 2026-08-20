@@ -1,3 +1,5 @@
+</main>
+
 <footer class="pl-footer py-4 mt-5">
   <div class="container text-center">
     <p class="mb-1"><i class="bi bi-book-half"></i> <strong>Pamulihan E-Library</strong></p>

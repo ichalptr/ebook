@@ -1,6 +1,8 @@
 <?php
 $page_title = 'Beranda';
 require_once __DIR__ . '/includes/header.php';
+require_once __DIR__ . '/includes/cover_helper.php';
+require_once __DIR__ . '/includes/book_card_helper.php';
 
 $totalBooks = (int)$pdo->query("SELECT COUNT(*) FROM books")->fetchColumn();
 $totalCategories = (int)$pdo->query("SELECT COUNT(*) FROM categories")->fetchColumn();
@@ -22,34 +24,6 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name")->fetchAll();
 $todayBook = $pdo->query("SELECT b.*, c.name AS category_name FROM books b
                            LEFT JOIN categories c ON c.id = b.category_id
                            ORDER BY RAND() LIMIT 1")->fetch();
-
-function book_cover_src(array $book): string {
-    if (!empty($book['cover_image'])) {
-        if (filter_var($book['cover_image'], FILTER_VALIDATE_URL)) return htmlspecialchars($book['cover_image']);
-        return UPLOAD_COVER_URL . htmlspecialchars($book['cover_image']);
-    }
-    return 'https://via.placeholder.com/300x450/1F4D3A/FAF6EC?text=' . urlencode($book['title']);
-}
-
-function render_book_card(array $b): void {
-    ?>
-    <div class="col-6 col-md-3">
-      <a href="<?= BASE_URL ?>/detail.php?id=<?= (int)$b['id'] ?>" class="text-decoration-none text-dark">
-        <div class="card book-card reveal">
-          <div class="book-cover-wrap">
-            <img src="<?= book_cover_src($b) ?>" alt="<?= htmlspecialchars($b['title']) ?>" loading="lazy">
-            <i class="bi bi-bookmark-fill fold-icon"></i>
-          </div>
-          <div class="card-body p-2">
-            <span class="badge badge-grade mb-1"><?= htmlspecialchars($b['grade_level']) ?></span>
-            <h6 class="mb-0 text-truncate"><?= htmlspecialchars($b['title']) ?></h6>
-            <small class="text-muted text-truncate d-block"><?= htmlspecialchars($b['author'] ?? '-') ?></small>
-          </div>
-        </div>
-      </a>
-    </div>
-    <?php
-}
 ?>
 
 <section class="hero-section">
@@ -121,7 +95,9 @@ function render_book_card(array $b): void {
     <span class="ribbon">HARI INI</span>
     <div class="row align-items-center">
       <div class="col-md-2 col-4">
-        <img src="<?= book_cover_src($todayBook) ?>" class="img-fluid rounded shadow-sm" alt="" style="aspect-ratio:2/3;object-fit:cover;">
+        <div class="rounded shadow-sm overflow-hidden" style="aspect-ratio:2/3;">
+          <?= book_cover_html($todayBook) ?>
+        </div>
       </div>
       <div class="col-md-7 col-8">
         <h5 class="mb-1"><i class="bi bi-stars" style="color:var(--turmeric-500)"></i> Baca Hari Ini</h5>
@@ -155,8 +131,13 @@ function render_book_card(array $b): void {
     <a href="<?= BASE_URL ?>/katalog.php?sort=newest" class="small fw-semibold">Lihat semua &rarr;</a>
   </div>
   <div class="row g-3 mb-5">
-    <?php if ($newBooks): foreach ($newBooks as $b): render_book_card($b); endforeach; else: ?>
-      <p class="text-muted">Belum ada buku. Tambahkan lewat Dashboard Admin.</p>
+    <?php if ($newBooks): foreach ($newBooks as $b): render_book_card($b, 'col-6 col-md-3', true); endforeach; else: ?>
+      <div class="col-12">
+        <div class="text-center text-muted py-5">
+          <i class="bi bi-inbox display-4"></i>
+          <p class="mt-2 mb-0">Belum ada buku. Tambahkan lewat Dashboard Admin.</p>
+        </div>
+      </div>
     <?php endif; ?>
   </div>
 
@@ -166,8 +147,13 @@ function render_book_card(array $b): void {
     <a href="<?= BASE_URL ?>/katalog.php?sort=popular" class="small fw-semibold">Lihat semua &rarr;</a>
   </div>
   <div class="row g-3 mb-5">
-    <?php if ($popularBooks): foreach ($popularBooks as $b): render_book_card($b); endforeach; else: ?>
-      <p class="text-muted">Belum ada data.</p>
+    <?php if ($popularBooks): foreach ($popularBooks as $b): render_book_card($b, 'col-6 col-md-3', true); endforeach; else: ?>
+      <div class="col-12">
+        <div class="text-center text-muted py-5">
+          <i class="bi bi-bar-chart display-4"></i>
+          <p class="mt-2 mb-0">Belum ada data pembacaan.</p>
+        </div>
+      </div>
     <?php endif; ?>
   </div>
 

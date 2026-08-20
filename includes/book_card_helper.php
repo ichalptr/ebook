@@ -1,14 +1,22 @@
 <?php
 require_once __DIR__ . '/cover_helper.php';
 
-function render_book_card(array $book, string $wrapClass = 'col-6 col-md-3'): void {
+/**
+ * Kartu buku standar dipakai di index.php, katalog.php, rak_saya.php.
+ * $showFoldIcon menambahkan ikon bookmark kecil di sudut cover (dipakai
+ * di katalog/beranda untuk menandakan kartu bisa "diklik untuk baca").
+ */
+function render_book_card(array $book, string $wrapClass = 'col-6 col-md-3', bool $showFoldIcon = false): void {
     $synopsis = trim(strip_tags($book['description'] ?? ''));
     ?>
     <div class="<?= htmlspecialchars($wrapClass) ?>">
         <a href="<?= BASE_URL ?>/detail.php?id=<?= (int)$book['id'] ?>" class="text-decoration-none text-dark">
-            <div class="card book-card">
+            <div class="card book-card reveal">
                 <div class="book-cover-wrap">
                     <?= book_cover_html($book) ?>
+                    <?php if ($showFoldIcon): ?>
+                        <i class="bi bi-bookmark-fill fold-icon"></i>
+                    <?php endif; ?>
                     <?php if ($synopsis): ?>
                         <div class="card-synopsis"><?= htmlspecialchars(mb_strimwidth($synopsis, 0, 160, '…')) ?></div>
                     <?php endif; ?>

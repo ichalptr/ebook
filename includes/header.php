@@ -60,3 +60,13 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     </div>
   </div>
 </nav>
+
+<!--
+  Pembungkus <main> ini yang membuat footer selalu menempel di bawah
+  viewport (sticky footer), termasuk di halaman pendek seperti
+  login.php/register.php. Body diset flex-column min-height:100vh di
+  style.css; <main> ini flex:1 sehingga otomatis mengisi sisa ruang
+  dan mendorong footer ke bawah. JANGAN hapus tag ini — footer.php
+  menutup tag ini sebelum elemen <footer> dibuka.
+-->
+<main class="site-main">
