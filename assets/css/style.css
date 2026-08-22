@@ -1,13 +1,26 @@
 /* =====================================================
-   Pamulihan E-Library — Design System
+   Pamulihan E-Library — Design System v2
    "Buka Gadget, Buka Buku" — Perpustakaan Digital Desa
-   Palette diambil dari lanskap Pamulihan: hutan, kertas, tanah liat, kunyit
+   Palet warna diambil dari lanskap Pamulihan: kanopi hutan, kertas
+   sawah, tanah liat, dan kunyit — dipertahankan dari versi awal
+   supaya semua halaman (termasuk yang tidak ikut di-redesign)
+   tetap konsisten, hanya EKSEKUSInya yang dirombak: skala tipografi,
+   sistem spacing, elevasi berlapis, dan komponen yang lebih presisi.
+
+   Struktur file:
+   1. Token & reset          5. Navbar & tombol
+   2. Tipografi dasar        6. Hero & feature band
+   3. Override Bootstrap     7. Kartu buku & chip
+      generik (card, alert,  8. Footer & bottom nav
+      form, table, dst)      9. Util & cover fallback
+   4. Woven divider / label
    ===================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600;9..144,700;9..144,900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  /* Color tokens */
+  /* ---- Color tokens: NILAI & NAMA dipertahankan agar style inline
+     var(--...) di halaman yang belum di-redesign tetap tampil benar ---- */
   --forest-900: #14261C;
   --forest-700: #1F4D3A;
   --forest-600: #276048;
@@ -33,455 +46,306 @@
   --ink-600: #4B5347;
   --ink-400: #7D8574;
 
-  /* Type */
+  /* ---- Token tambahan (baru, murni additive — tidak menimpa apa pun) ---- */
+  --forest-950: #0D1913;
+  --forest-800: #182F22;
+  --forest-200: #B7DBC7;
+  --white: #ffffff;
+
   --font-display: 'Fraunces', Georgia, serif;
   --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Radius / shadow */
+  --radius-xs: 6px;
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 22px;
-  --shadow-card: 0 1px 2px rgba(20,38,28,.04), 0 8px 24px rgba(20,38,28,.08);
-  --shadow-lift: 0 4px 8px rgba(20,38,28,.06), 0 20px 40px rgba(20,38,28,.14);
+  --radius-btn: 11px;
+  --radius-full: 999px;
+
+  /* Elevasi berlapis & rendah-opacity — kesan lebih premium dibanding
+     shadow tunggal yang berat */
+  --shadow-xs: 0 1px 2px rgba(20,38,28,.05);
+  --shadow-sm: 0 1px 2px rgba(20,38,28,.04), 0 2px 8px rgba(20,38,28,.05);
+  --shadow-card: 0 1px 2px rgba(20,38,28,.03), 0 8px 24px rgba(20,38,28,.07);
+  --shadow-lift: 0 4px 10px rgba(20,38,28,.07), 0 20px 40px rgba(20,38,28,.12);
+  --shadow-pop: 0 12px 32px rgba(20,38,28,.16), 0 4px 12px rgba(20,38,28,.08);
+
+  --ease: cubic-bezier(.4,0,.2,1);
+  --dur-1: .15s;
+  --dur-2: .25s;
 
   --bottom-nav-h: 64px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
 
 * { box-sizing: border-box; }
-
 html { scroll-behavior: smooth; }
-
-/* ---------------------------------------------------------------
-   Sticky footer. body is a full-height flex column; includes/header.php
-   opens <main class="site-main"> right after the nav, and footer.php
-   closes it right before <footer>. site-main's flex:1 fills whatever
-   space the page content doesn't use, pushing the footer to the
-   bottom of the viewport even on short pages like login/register.
-   --------------------------------------------------------------- */
 html, body { height: 100%; }
+
 body {
   background-color: var(--sand-100);
   color: var(--ink-800);
   font-family: var(--font-body);
   font-size: 16px;
-  line-height: 1.55;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
+/* ---------------------------------------------------------------
+   Sticky footer. JANGAN hapus/ubah dua baris ini — includes/header.php
+   membuka <main class="site-main"> dan includes/footer.php menutupnya
+   tepat sebelum <footer>. flex:1 di .site-main mendorong footer ke
+   dasar viewport bahkan di halaman pendek (login/register).
+   --------------------------------------------------------------- */
 .site-main { flex: 1 0 auto; display: flex; flex-direction: column; }
 .pl-footer { flex-shrink: 0; }
 
-h1, h2, h3, h4, .font-display {
+/* =================== 2. Tipografi =================== */
+h1, h2, h3, h4, h5, .font-display {
   font-family: var(--font-display);
   color: var(--forest-900);
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
+  line-height: 1.18;
 }
+p { margin-bottom: 1rem; }
+p:last-child { margin-bottom: 0; }
 
-a { color: var(--forest-700); }
+a { color: var(--forest-700); text-underline-offset: 2px; }
 a:hover { color: var(--clay-600); }
 
-:focus-visible {
-  outline: 3px solid var(--turmeric-400);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
+:focus-visible { outline: 3px solid var(--turmeric-400); outline-offset: 2px; border-radius: 4px; }
 ::selection { background: var(--turmeric-100); color: var(--forest-900); }
 
-/* =================== Woven pattern divider (signature motif) =================== */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--sand-300); border-radius: 999px; border: 2px solid var(--sand-100); }
+::-webkit-scrollbar-thumb:hover { background: var(--forest-300); }
+
+/* =================== 3. Override komponen Bootstrap generik ===================
+   Banyak halaman (login, register, rak_saya, semua menu import admin)
+   memakai class Bootstrap polos (.card/.alert/.form-control/.table/...).
+   Merapikan di sini membuat SELURUH situs ikut konsisten tanpa perlu
+   menyentuh file-file tersebut satu per satu. */
+.card { border: 1px solid var(--sand-300); border-radius: var(--radius-md); box-shadow: var(--shadow-card); }
+.card-body { padding: 1.25rem; }
+
+.form-control, .form-select {
+  border-radius: var(--radius-xs);
+  border-color: var(--sand-300);
+  padding: .6rem .85rem;
+  font-size: .93rem;
+  color: var(--ink-800);
+  background-color: var(--white);
+}
+.form-control:focus, .form-select:focus { border-color: var(--forest-500); box-shadow: 0 0 0 3px var(--forest-100); }
+.form-label { font-weight: 600; font-size: .86rem; color: var(--ink-800); margin-bottom: .4rem; }
+.form-check-input:checked { background-color: var(--forest-600); border-color: var(--forest-600); }
+.form-check-input:focus { box-shadow: 0 0 0 3px var(--forest-100); }
+
+.alert { border-radius: var(--radius-sm); border: 1px solid transparent; font-size: .92rem; }
+.alert-success { background: var(--forest-100); color: var(--forest-800); border-color: rgba(31,77,58,.15); }
+.alert-danger { background: var(--clay-100); color: var(--clay-600); border-color: rgba(193,81,46,.18); }
+.alert-warning { background: var(--turmeric-100); color: #8a5e12; border-color: rgba(216,149,38,.25); }
+.alert-info, .alert-light { background: var(--sand-100); color: var(--ink-600); border-color: var(--sand-300); }
+
+.badge { font-weight: 700; letter-spacing: .01em; border-radius: var(--radius-full); padding: .32rem .65rem; }
+.table { color: var(--ink-800); }
+.table > :not(caption) > * > * { padding: .65rem .8rem; }
+.table-light { --bs-table-bg: var(--sand-100); }
+
+.breadcrumb { font-size: .85rem; }
+.breadcrumb-item + .breadcrumb-item::before { color: var(--ink-400); }
+
+.nav-tabs { border-bottom: 1.5px solid var(--sand-300); }
+.nav-tabs .nav-link { border: none; color: var(--ink-600); font-weight: 600; padding: .65rem 1rem; border-radius: 0; }
+.nav-tabs .nav-link.active { color: var(--forest-700); background: transparent; border-bottom: 2.5px solid var(--forest-600); }
+
+.dropdown-menu { border: 1px solid var(--sand-300); border-radius: var(--radius-sm); box-shadow: var(--shadow-lift); padding: .4rem; }
+.dropdown-item { border-radius: 8px; padding: .5rem .7rem; font-size: .89rem; }
+.dropdown-item:hover, .dropdown-item:focus { background: var(--sand-100); }
+.dropdown-divider { border-color: var(--sand-200); margin: .35rem 0; }
+
+/* =================== 4. Woven divider & section label =================== */
 .woven-divider {
-  height: 14px;
-  width: 100%;
+  height: 14px; width: 100%;
   background-image: repeating-linear-gradient(45deg, var(--forest-300) 0 2px, transparent 2px 10px),
                      repeating-linear-gradient(-45deg, var(--forest-300) 0 2px, transparent 2px 10px);
-  opacity: .35;
+  opacity: .3;
   background-size: 14px 14px;
 }
-
 .section-label {
-  display: inline-flex;
-  align-items: center;
-  gap: .5rem;
-  font-family: var(--font-mono);
-  font-size: .72rem;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--forest-600);
-  font-weight: 500;
+  display: inline-flex; align-items: center; gap: .5rem;
+  font-family: var(--font-mono); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--forest-600); font-weight: 500;
 }
-.section-label::before {
-  content: '';
-  width: 18px; height: 2px;
-  background: var(--clay-500);
-  display: inline-block;
-}
+.section-label::before { content: ''; width: 18px; height: 2px; background: var(--clay-500); display: inline-block; }
 
-/* =================== Navbar (desktop) =================== */
-.pl-navbar {
-  background: var(--forest-700);
-  padding: .7rem 0;
-  position: sticky; top: 0; z-index: 1000;
-  box-shadow: 0 2px 12px rgba(20,38,28,.15);
-}
-.pl-navbar .navbar-brand {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.35rem;
-  color: var(--sand-50) !important;
-  display: flex; align-items: center; gap: .5rem;
-}
-.pl-navbar .navbar-brand .brand-mark {
-  width: 34px; height: 34px; border-radius: 9px;
-  background: var(--turmeric-400);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--forest-900); font-size: 1.1rem;
-  transform: rotate(-4deg);
-}
-.pl-navbar .nav-link {
-  color: rgba(250,246,236,.82) !important;
-  font-weight: 500;
-  position: relative;
-  padding: .5rem .9rem !important;
-}
+/* =================== 5. Navbar & tombol =================== */
+.pl-navbar { background: var(--forest-900); padding: 0; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,.06); }
+.pl-navbar .container { min-height: 68px; display: flex; align-items: center; flex-wrap: wrap; }
+.pl-navbar .navbar-brand { font-family: var(--font-display); font-weight: 700; font-size: 1.28rem; color: var(--sand-50) !important; display: flex; align-items: center; gap: .55rem; }
+.pl-navbar .navbar-brand .brand-mark { width: 34px; height: 34px; border-radius: 10px; background: var(--turmeric-400); display: flex; align-items: center; justify-content: center; color: var(--forest-900); font-size: 1.05rem; }
+.pl-navbar .nav-link { color: rgba(250,246,236,.75) !important; font-weight: 500; font-size: .93rem; position: relative; padding: .5rem .85rem !important; transition: color var(--dur-1) var(--ease); }
 .pl-navbar .nav-link:hover { color: #fff !important; }
-.pl-navbar .nav-link.active-link::after {
-  content: '';
-  position: absolute; left: .9rem; right: .9rem; bottom: .1rem; height: 2px;
-  background: var(--turmeric-400); border-radius: 2px;
-}
-.pl-navbar .form-control {
-  border-radius: 999px; border: none;
-  background: rgba(255,255,255,.12); color: #fff;
-}
-.pl-navbar .form-control::placeholder { color: rgba(255,255,255,.6); }
-.pl-navbar .form-control:focus { background: #fff; color: var(--ink-800); }
-.btn-turmeric {
-  background: var(--turmeric-400); border: none; color: var(--forest-900); font-weight: 700;
-  border-radius: 999px;
-}
+.pl-navbar .nav-link.active-link { color: #fff !important; }
+.pl-navbar .nav-link.active-link::after { content: ''; position: absolute; left: .85rem; right: .85rem; bottom: 0; height: 2px; background: var(--turmeric-400); border-radius: 2px; }
+.pl-navbar .form-control { border-radius: var(--radius-full); border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.08); color: #fff; font-size: .87rem; padding: .5rem 1rem; }
+.pl-navbar .form-control::placeholder { color: rgba(255,255,255,.5); }
+.pl-navbar .form-control:focus { background: #fff; color: var(--ink-800); box-shadow: none; border-color: transparent; }
+.pl-navbar .dropdown-toggle::after { opacity: .55; margin-left: .5rem; }
+.pl-navbar .nav-avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--turmeric-400); color: var(--forest-900); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: .72rem; font-family: var(--font-display); }
+
+.btn-turmeric { background: var(--turmeric-400); border: none; color: var(--forest-900); font-weight: 700; border-radius: var(--radius-btn); }
 .btn-turmeric:hover { background: var(--turmeric-500); color: var(--forest-900); }
 
-/* =================== Buttons =================== */
-.btn { border-radius: 999px; font-weight: 600; padding: .55rem 1.3rem; transition: transform .15s ease, box-shadow .15s ease; }
-.btn:active { transform: scale(.97); }
-.btn-forest {
-  background: var(--forest-700); border: none; color: #fff;
-}
-.btn-forest:hover { background: var(--forest-600); color: #fff; box-shadow: 0 6px 18px rgba(31,77,58,.3); }
-.btn-clay { background: var(--clay-500); border: none; color: #fff; }
-.btn-clay:hover { background: var(--clay-600); color: #fff; }
+.btn { border-radius: var(--radius-btn); font-weight: 600; padding: .6rem 1.35rem; font-size: .92rem; border-width: 1.5px; transition: transform var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease), background var(--dur-1) var(--ease); }
+.btn:active { transform: scale(.98); }
+.btn-lg { padding: .8rem 1.75rem; font-size: 1rem; border-radius: 13px; }
+.btn-sm { padding: .4rem .9rem; font-size: .82rem; border-radius: 9px; }
+
+.btn-forest { background: var(--forest-700); border-color: var(--forest-700); color: #fff; }
+.btn-forest:hover { background: var(--forest-600); border-color: var(--forest-600); color: #fff; box-shadow: 0 8px 20px rgba(31,77,58,.28); }
+.btn-clay { background: var(--clay-500); border-color: var(--clay-500); color: #fff; }
+.btn-clay:hover { background: var(--clay-600); border-color: var(--clay-600); color: #fff; }
 .btn-outline-forest { border: 1.5px solid var(--forest-500); color: var(--forest-700); background: transparent; }
-.btn-outline-forest:hover { background: var(--forest-700); color: #fff; }
+.btn-outline-forest:hover { background: var(--forest-700); border-color: var(--forest-700); color: #fff; }
 
-/* Legacy bootstrap green success mapped to forest for consistency where markup still uses btn-success */
-.btn-success { background: var(--forest-700); border-color: var(--forest-700); border-radius: 999px; font-weight: 600; }
+.btn-success { background: var(--forest-700); border-color: var(--forest-700); border-radius: var(--radius-btn); font-weight: 600; }
 .btn-success:hover { background: var(--forest-600); border-color: var(--forest-600); }
-.btn-outline-success { color: var(--forest-700); border-color: var(--forest-500); border-radius: 999px; font-weight: 600; }
+.btn-outline-success { color: var(--forest-700); border-color: var(--forest-500); border-radius: var(--radius-btn); font-weight: 600; }
 .btn-outline-success:hover { background: var(--forest-700); border-color: var(--forest-700); }
+.btn-outline-secondary, .btn-outline-danger, .btn-secondary { border-radius: var(--radius-btn); }
+.btn-link { text-decoration: none; font-weight: 600; }
 
-/* =================== Hero =================== */
+/* =================== 6. Hero & feature band =================== */
 .hero-section {
   position: relative;
-  background: linear-gradient(160deg, var(--forest-900) 0%, var(--forest-700) 55%, var(--forest-600) 100%);
+  background: linear-gradient(165deg, var(--forest-950) 0%, var(--forest-900) 45%, var(--forest-700) 100%);
   color: var(--sand-50);
-  padding: 3.5rem 0 6rem;
+  padding: 4.5rem 0 7rem;
   overflow: hidden;
 }
 .hero-section::before {
-  content: '';
-  position: absolute; inset: 0;
-  background-image: radial-gradient(circle at 15% 20%, rgba(227,169,62,.18), transparent 45%),
-                     radial-gradient(circle at 85% 70%, rgba(193,81,46,.16), transparent 40%);
+  content: ''; position: absolute; inset: 0;
+  background-image: radial-gradient(circle at 12% 15%, rgba(227,169,62,.16), transparent 42%),
+                     radial-gradient(circle at 88% 75%, rgba(193,81,46,.14), transparent 40%);
   pointer-events: none;
 }
-.hero-eyebrow {
-  font-family: var(--font-mono);
-  font-size: .78rem;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--turmeric-400);
-  display: inline-flex; align-items: center; gap: .5rem;
-  margin-bottom: 1rem;
-}
-.hero-eyebrow::before { content:'●'; font-size:.5rem; color: var(--clay-500); }
-.hero-section h1 {
-  color: #fff;
-  font-size: clamp(2.1rem, 5vw, 3.4rem);
-  font-weight: 600;
-  line-height: 1.08;
-  max-width: 720px;
-}
-.hero-section h1 em {
-  font-style: italic;
-  color: var(--turmeric-400);
-}
-.hero-section .lead {
-  color: rgba(250,246,236,.82);
-  max-width: 560px;
-  font-size: 1.08rem;
-}
-.hero-actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1.75rem; }
+.hero-eyebrow { font-family: var(--font-mono); font-size: .76rem; letter-spacing: .14em; text-transform: uppercase; color: var(--turmeric-400); display: inline-flex; align-items: center; gap: .5rem; margin-bottom: 1.1rem; }
+.hero-eyebrow::before { content: '●'; font-size: .5rem; color: var(--clay-500); }
+.hero-section h1 { color: #fff; font-size: clamp(2.2rem, 4.6vw, 3.6rem); font-weight: 600; line-height: 1.08; max-width: 700px; }
+.hero-section h1 em { font-style: italic; color: var(--turmeric-400); }
+.hero-section .lead { color: rgba(250,246,236,.78); max-width: 540px; font-size: 1.1rem; font-weight: 400; }
+.hero-actions { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 2rem; align-items: center; }
+.hero-facts { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 2.25rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,.1); }
+.hero-facts .fact { display: flex; align-items: center; gap: .5rem; font-size: .85rem; color: rgba(250,246,236,.68); }
+.hero-facts .fact i { color: var(--turmeric-400); }
 
-/* Hero visual — ilustrasi buku terbuka (statis, tanpa animasi loop) */
-.hero-visual { position: relative; height: 280px; display: flex; align-items: center; justify-content: center; }
-.hero-visual svg { width: 100%; height: 100%; max-width: 340px; filter: drop-shadow(0 18px 30px rgba(0,0,0,.28)); }
-.hero-visual .glow {
-  position: absolute; width: 260px; height: 260px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(227,169,62,.28) 0%, transparent 70%);
-  filter: blur(4px);
-}
+.hero-visual { position: relative; height: 300px; display: flex; align-items: center; justify-content: center; }
+.hero-visual svg { width: 100%; height: 100%; max-width: 340px; filter: drop-shadow(0 20px 34px rgba(0,0,0,.3)); }
+.hero-visual .glow { position: absolute; width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle, rgba(227,169,62,.24) 0%, transparent 70%); filter: blur(6px); }
 
-/* =================== Stat strip =================== */
-.stat-strip {
-  background: var(--sand-50);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lift);
-  margin-top: -3.75rem;
-  position: relative;
-  z-index: 5;
-  padding: 1.5rem 1rem;
-}
+.feature-band { padding: .5rem 0 3rem; }
+.feature-item { display: flex; gap: 1rem; align-items: flex-start; padding: 1.4rem; background: var(--sand-50); border: 1px solid var(--sand-300); border-radius: var(--radius-md); height: 100%; transition: transform var(--dur-2) var(--ease), box-shadow var(--dur-2) var(--ease); }
+.feature-item:hover { transform: translateY(-3px); box-shadow: var(--shadow-card); }
+.feature-icon { flex-shrink: 0; width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; }
+.feature-item h6 { font-family: var(--font-display); color: var(--ink-900); margin-bottom: .3rem; }
+.feature-item p { font-size: .85rem; color: var(--ink-600); margin: 0; line-height: 1.5; }
+
+/* Stat strip (kartu mengambang di atas hero) */
+.stat-strip { background: var(--sand-50); border-radius: var(--radius-lg); box-shadow: var(--shadow-pop); margin-top: -4rem; position: relative; z-index: 5; padding: 1.6rem 1rem; border: 1px solid rgba(255,255,255,.6); }
 .stat-item { text-align: center; padding: .5rem; }
-.stat-item .number {
-  font-family: var(--font-display);
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--forest-700);
-  line-height: 1;
-}
-.stat-item .label {
-  font-size: .78rem;
-  color: var(--ink-600);
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  margin-top: .3rem;
-}
+.stat-item .number { font-family: var(--font-display); font-size: 2.1rem; font-weight: 700; color: var(--forest-700); line-height: 1; }
+.stat-item .label { font-size: .76rem; color: var(--ink-600); text-transform: uppercase; letter-spacing: .07em; margin-top: .35rem; font-weight: 600; }
 .stat-item + .stat-item { border-left: 1px dashed var(--sand-300); }
-@media (max-width: 767px) {
-  .stat-item + .stat-item { border-left: none; border-top: 1px dashed var(--sand-300); padding-top: 1rem; margin-top: .5rem; }
-}
+@media (max-width: 767px) { .stat-item + .stat-item { border-left: none; border-top: 1px dashed var(--sand-300); padding-top: 1rem; margin-top: .5rem; } }
 
-/* =================== Today read card =================== */
-.today-read-card {
-  background: linear-gradient(120deg, var(--turmeric-100), var(--sand-50));
-  border: 1.5px dashed var(--turmeric-500);
-  border-radius: var(--radius-lg);
-  position: relative;
-  overflow: hidden;
-}
-.today-read-card .ribbon {
-  position: absolute; top: 0; right: 0;
-  background: var(--clay-500); color: #fff;
-  font-family: var(--font-mono); font-size: .68rem; letter-spacing: .08em;
-  padding: .3rem .9rem; border-radius: 0 var(--radius-lg) 0 var(--radius-md);
-}
+.today-read-card { background: linear-gradient(120deg, var(--turmeric-100), var(--sand-50)); border: 1.5px dashed var(--turmeric-500); border-radius: var(--radius-lg); position: relative; overflow: hidden; }
+.today-read-card .ribbon { position: absolute; top: 0; right: 0; background: var(--clay-500); color: #fff; font-family: var(--font-mono); font-size: .68rem; letter-spacing: .08em; padding: .35rem 1rem; border-radius: 0 var(--radius-lg) 0 var(--radius-md); }
 
-/* =================== Category chips =================== */
-.chip {
-  display: inline-flex; align-items: center; gap: .4rem;
-  padding: .45rem 1.05rem;
-  border-radius: 999px;
-  border: 1.5px solid var(--forest-500);
-  color: var(--forest-700);
-  background: var(--sand-50);
-  font-weight: 600; font-size: .88rem;
-  text-decoration: none;
-  transition: all .18s ease;
-}
-.chip:hover, .chip.active {
-  background: var(--forest-700); color: #fff; border-color: var(--forest-700);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(31,77,58,.25);
-}
+.chip { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem 1.1rem; border-radius: var(--radius-full); border: 1.5px solid var(--sand-300); color: var(--forest-700); background: var(--sand-50); font-weight: 600; font-size: .87rem; text-decoration: none; transition: all .18s var(--ease); }
+.chip:hover, .chip.active { background: var(--forest-700); color: #fff; border-color: var(--forest-700); transform: translateY(-2px); box-shadow: 0 8px 16px rgba(31,77,58,.22); }
 
-/* =================== Book cards — signature: page-fold hover =================== */
-.book-card {
-  border: none;
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  background: var(--sand-50);
-  box-shadow: var(--shadow-card);
-  height: 100%;
-  transition: transform .22s cubic-bezier(.2,.8,.3,1), box-shadow .22s ease;
-  position: relative;
-}
-.book-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lift); }
+/* =================== 7. Kartu buku =================== */
+.book-card { border: 1px solid var(--sand-200); border-radius: var(--radius-md); overflow: hidden; background: var(--sand-50); box-shadow: var(--shadow-xs); height: 100%; transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease); position: relative; }
+.book-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lift); border-color: transparent; }
 
-.book-cover-wrap {
-  aspect-ratio: 2/3;
-  background: var(--forest-100);
-  display: flex; align-items: center; justify-content: center;
-  overflow: hidden;
-  position: relative;
-}
-.book-cover-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s ease; }
-.book-card:hover .book-cover-wrap img { transform: scale(1.04); }
-.book-card:hover .book-cover-wrap .generated-cover { transform: scale(1.04); }
+.book-cover-wrap { aspect-ratio: 2/3; background: var(--forest-100); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+.book-cover-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s var(--ease); }
+.book-card:hover .book-cover-wrap img { transform: scale(1.045); }
+.book-card:hover .book-cover-wrap .generated-cover { transform: scale(1.045); }
 
-/* Synopsis hover overlay. Previously .card-synopsis had NO rules
-   anywhere, so it rendered as plain unstyled text flowing inside the
-   cover box — visually stacked/overlapping behind the cover image
-   instead of a proper reveal-on-hover panel. */
-.card-synopsis {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: flex-end;
-  padding: 1.75rem .65rem .65rem;
-  background: linear-gradient(180deg, rgba(20,38,28,0) 35%, rgba(20,38,28,.92) 100%);
-  color: var(--sand-50);
-  font-size: .72rem;
-  line-height: 1.35;
-  opacity: 0;
-  transition: opacity .2s ease;
-  pointer-events: none;
-}
+.card-synopsis { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 1.75rem .75rem .75rem; background: linear-gradient(180deg, rgba(20,38,28,0) 32%, rgba(20,38,28,.94) 100%); color: var(--sand-50); font-size: .72rem; line-height: 1.4; opacity: 0; transition: opacity .22s var(--ease); pointer-events: none; }
 .book-card:hover .card-synopsis { opacity: 1; }
 
-/* Dog-ear page fold */
-.book-cover-wrap::after {
-  content: '';
-  position: absolute; top: 0; right: 0;
-  width: 0; height: 0;
-  border-style: solid;
-  border-width: 0 26px 26px 0;
-  border-color: transparent var(--sand-100) transparent transparent;
-  filter: drop-shadow(-2px 2px 3px rgba(0,0,0,.18));
-  transition: border-width .2s ease;
-}
-.book-card:hover .book-cover-wrap::after {
-  border-width: 0 38px 38px 0;
-}
-.book-cover-wrap .fold-icon {
-  position: absolute; top: 3px; right: 3px;
-  color: var(--forest-700); font-size: .68rem;
-  opacity: 0; transition: opacity .2s ease .05s;
-}
-.book-card:hover .fold-icon { opacity: 1; }
+.book-cover-wrap .fold-icon { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 8px; background: rgba(20,38,28,.55); backdrop-filter: blur(3px); color: var(--turmeric-400); font-size: .68rem; display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateY(-4px); transition: opacity .2s var(--ease), transform .2s var(--ease); }
+.book-card:hover .fold-icon { opacity: 1; transform: translateY(0); }
 
-.badge-grade {
-  font-size: .68rem; font-weight: 700;
-  background: var(--forest-100) !important; color: var(--forest-700) !important;
-  border-radius: 999px; padding: .28rem .6rem;
-}
+.book-cover-wrap .cat-tag { position: absolute; top: 8px; left: 8px; right: 40px; background: rgba(20,38,28,.55); backdrop-filter: blur(3px); color: #fff; font-size: .62rem; font-weight: 700; letter-spacing: .02em; padding: .25rem .55rem; border-radius: var(--radius-full); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: fit-content; max-width: calc(100% - 40px); }
 
-.book-card .card-body h6 {
-  font-family: var(--font-display);
-  font-weight: 600;
-  color: var(--ink-900);
-}
+.badge-grade { font-size: .66rem; font-weight: 700; background: var(--forest-100) !important; color: var(--forest-700) !important; border-radius: var(--radius-full); padding: .3rem .62rem; }
 
-/* =================== Reader (baca.php) =================== */
-.reader-toolbar {
-  background: var(--forest-900);
-  color: #fff;
-}
-.reader-toolbar .btn-nav:disabled { opacity: .3; }
+.book-card .card-body { padding: .85rem .9rem 1rem; }
+.book-card .card-body h6 { font-family: var(--font-display); font-weight: 600; color: var(--ink-900); font-size: .93rem; margin-top: .3rem; }
+.book-card .card-body small { font-size: .76rem; }
 
-/* =================== Footer =================== */
-.pl-footer {
-  background: var(--forest-900);
-  color: rgba(250,246,236,.75);
-}
-.pl-footer strong { color: #fff; font-family: var(--font-display); }
-.pl-footer a { color: var(--turmeric-400); }
+/* =================== Halaman detail buku =================== */
+.detail-panel { background: var(--sand-50); border: 1px solid var(--sand-300); border-radius: var(--radius-lg); padding: 1.75rem; box-shadow: var(--shadow-card); }
+.detail-meta { list-style: none; padding: 0; margin: 0 0 1rem; display: flex; flex-wrap: wrap; gap: .35rem 1.25rem; }
+.detail-meta li { font-size: .88rem; color: var(--ink-600); display: flex; align-items: center; gap: .4rem; }
+.detail-meta i { color: var(--forest-500); }
+.detail-synopsis { color: var(--ink-600); line-height: 1.7; max-width: 640px; }
+.progress-note { display: inline-flex; align-items: center; gap: .5rem; background: var(--turmeric-100); border: 1px solid var(--turmeric-400); color: var(--ink-800); font-size: .85rem; padding: .55rem .9rem; border-radius: var(--radius-sm); }
+.progress-note i { color: var(--clay-500); }
+.btn-fav { border: 1.5px solid var(--clay-500); color: var(--clay-600); background: transparent; }
+.btn-fav:hover { background: var(--clay-100); }
+.btn-fav.is-active { background: var(--clay-500); color: #fff; }
 
-/* =================== Bottom mobile nav (app-like) =================== */
-.mobile-bottom-nav {
-  display: none;
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 1200;
-  background: var(--sand-50);
-  border-top: 1px solid var(--sand-300);
-  box-shadow: 0 -6px 20px rgba(20,38,28,.1);
-  padding: .35rem .5rem calc(.35rem + env(safe-area-inset-bottom, 0));
-}
+/* =================== Toolbar filter (katalog.php) =================== */
+.filter-toolbar { background: var(--sand-50); border: 1px solid var(--sand-300); border-radius: var(--radius-md); padding: 1rem 1.1rem; box-shadow: var(--shadow-xs); top: 84px; z-index: 10; }
+
+/* =================== 8. Footer & bottom nav =================== */
+.pl-footer { background: var(--forest-950); color: rgba(250,246,236,.68); padding-top: 3rem; }
+.pl-footer .footer-brand { display: flex; align-items: center; gap: .55rem; color: #fff; font-family: var(--font-display); font-weight: 700; font-size: 1.15rem; margin-bottom: .75rem; }
+.pl-footer .footer-brand .brand-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--turmeric-400); color: var(--forest-900); display: flex; align-items: center; justify-content: center; font-size: .95rem; }
+.pl-footer h6 { color: #fff; font-family: var(--font-mono); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 1rem; }
+.pl-footer ul { list-style: none; padding: 0; margin: 0; }
+.pl-footer ul li { margin-bottom: .55rem; }
+.pl-footer a { color: rgba(250,246,236,.68); text-decoration: none; font-size: .88rem; }
+.pl-footer a:hover { color: var(--turmeric-400); }
+.pl-footer .footer-bottom { border-top: 1px solid rgba(255,255,255,.08); margin-top: 2.5rem; padding: 1.25rem 0; font-size: .8rem; }
+.pl-footer .footer-bottom strong { color: #fff; }
+
+.mobile-bottom-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 1200; background: rgba(250,246,236,.94); backdrop-filter: blur(10px); border-top: 1px solid var(--sand-300); box-shadow: 0 -6px 24px rgba(20,38,28,.1); padding: .35rem .5rem calc(.35rem + env(safe-area-inset-bottom, 0)); }
 .mobile-bottom-nav .row { display: flex; }
-.mobile-bottom-nav a {
-  flex: 1;
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  color: var(--ink-400);
-  text-decoration: none;
-  font-size: .66rem;
-  font-weight: 600;
-  padding: .35rem 0;
-  border-radius: 12px;
-  transition: color .15s ease;
-}
-.mobile-bottom-nav a i { font-size: 1.25rem; }
+.mobile-bottom-nav a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--ink-400); text-decoration: none; font-size: .65rem; font-weight: 600; padding: .4rem 0; border-radius: 12px; transition: color .15s var(--ease); }
+.mobile-bottom-nav a i { font-size: 1.28rem; }
 .mobile-bottom-nav a.active-link { color: var(--forest-700); }
-.mobile-bottom-nav a.active-link i { transform: translateY(-1px); }
-@media (max-width: 767px) {
-  .mobile-bottom-nav { display: block; }
-  body { padding-bottom: var(--bottom-nav-h); }
-}
+@media (max-width: 767px) { .mobile-bottom-nav { display: block; } body { padding-bottom: var(--bottom-nav-h); } }
+@media (max-width: 991px) { .pl-navbar .desktop-search { display: none; } }
 
-/* Hide desktop-only nav search on very small screens, shown via bottom nav search icon instead */
-@media (max-width: 991px) {
-  .pl-navbar .desktop-search { display: none; }
-}
-
-/* =================== Misc / progress =================== */
-.progress-thin { height: 6px; border-radius: 999px; overflow: hidden; }
+/* =================== 9. Util & cover fallback =================== */
+.progress-thin { height: 6px; border-radius: 999px; overflow: hidden; background: var(--sand-200); }
 .progress-thin .progress-bar { background: var(--clay-500); }
 
-/* Skeleton loading (for future async use) */
 .skeleton { background: linear-gradient(90deg, var(--sand-200) 25%, var(--sand-300) 37%, var(--sand-200) 63%); background-size: 400% 100%; animation: skeletonShine 1.4s ease infinite; border-radius: var(--radius-sm); }
-@keyframes skeletonShine { 0%{ background-position: 100% 50%; } 100%{ background-position: 0 50%; } }
+@keyframes skeletonShine { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
 
-/* Scroll reveal (opt-in via .reveal class + JS toggling .is-visible) */
-.reveal { opacity: 0; transform: translateY(16px); transition: opacity .5s ease, transform .5s ease; }
+.reveal { opacity: 0; transform: translateY(16px); transition: opacity .5s var(--ease), transform .5s var(--ease); }
 .reveal.is-visible { opacity: 1; transform: translateY(0); }
 
-/* ---------------------------------------------------------------
-   cover-media: base class always applied by book_cover_html() (both
-   to the real <img> and to the generated-cover fallback div) so a
-   book cover reliably fills whatever box it's placed in, without
-   every calling page needing to remember its own sizing/object-fit.
-   Callers can still layer an extra class (e.g. row-thumb) on top —
-   later rules in the cascade (like admin.css) can override sizing.
-   --------------------------------------------------------------- */
 .cover-media { display: block; width: 100%; height: 100%; object-fit: cover; }
 
-/* ---------------------------------------------------------------
-   Generated cover fallback (includes/cover_helper.php). Previously
-   unstyled anywhere, so it rendered as a collapsed 0px box wherever
-   a book had no cover image. Restored so catalog/admin always show
-   a proper gradient-and-initial placeholder instead of empty space.
-   --------------------------------------------------------------- */
-.generated-cover {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  text-align: center; padding: .9rem;
-  color: #fff; position: relative; overflow: hidden;
-}
-.generated-cover::before {
-  content: '';
-  position: absolute; inset: 0;
-  background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.07) 0 2px, transparent 2px 12px);
-  pointer-events: none;
-}
-.generated-cover .initial {
-  font-family: var(--font-display); font-weight: 800; font-size: 2rem;
-  line-height: 1; opacity: .95;
-}
-.generated-cover .cover-title {
-  font-size: .68rem; font-weight: 600; margin-top: .5rem;
-  line-height: 1.25; opacity: .88;
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-}
-
-/* ---------------------------------------------------------------
-   Consistency fix: index.php / katalog.php previously used raw
-   <img src="via.placeholder.com/...">  for missing covers instead
-   of the generated-cover fallback used elsewhere, and via.placeholder.com
-   is an external dependency that can go down. book_cover_html() from
-   cover_helper.php is the single source of truth now (see updated
-   index.php / katalog.php / rak_saya.php / detail.php).
-   --------------------------------------------------------------- */
+.generated-cover { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: .9rem; color: #fff; position: relative; overflow: hidden; }
+.generated-cover::before { content: ''; position: absolute; inset: 0; background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.07) 0 2px, transparent 2px 12px); pointer-events: none; }
+.generated-cover .initial { font-family: var(--font-display); font-weight: 800; font-size: 2rem; line-height: 1; opacity: .95; }
+.generated-cover .cover-title { font-size: .68rem; font-weight: 600; margin-top: .5rem; line-height: 1.25; opacity: .88; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }

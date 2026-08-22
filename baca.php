@@ -41,9 +41,13 @@ $fileUrl = filter_var($book['file_path'], FILTER_VALIDATE_URL)
   .reader-toolbar { background:var(--forest-900); color:#fff; padding:.6rem .9rem; display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
   .reader-toolbar .title { font-family:'Fraunces',serif; font-weight:600; flex:1; min-width:120px; font-size:1rem; }
   .reader-toolbar .btn { border-radius:999px; }
-  #pdf-container { display:flex; justify-content:center; align-items:flex-start; padding:1.25rem .75rem 5.5rem; min-height:calc(100vh - 60px); overflow:auto; touch-action: pan-y; }
-  .page-flip-wrap { background:#fff; box-shadow:0 20px 50px rgba(0,0,0,.45); border-radius:6px; transition:opacity .2s ease; }
-  #pageCanvas { display:block; max-width:100%; height:auto; border-radius:6px; }
+  #pdf-container { display:flex; justify-content:center; align-items:flex-start; padding:1.25rem .75rem 5.5rem; min-height:calc(100vh - 60px); overflow:auto; touch-action:pan-y; }
+  .page-flip-wrap { display:flex; gap:2px; background:#8f7660; box-shadow:0 20px 50px rgba(0,0,0,.45); border-radius:6px; transition:opacity .2s ease; }
+  .page-sheet { display:flex; justify-content:center; align-items:flex-start; min-width:0; background:#fff; overflow:hidden; }
+  .page-sheet:first-child { border-radius:6px 0 0 6px; }
+  .page-sheet:last-child { border-radius:0 6px 6px 0; }
+  .page-sheet.is-empty { background:#e7dfd4; }
+  .page-canvas { display:block; width:min(42vw, 560px); max-width:100%; height:auto; }
   .page-flip-wrap.flipping { animation: flipPage .35s ease; }
   @keyframes flipPage {
     0%   { transform: rotateY(0deg) scale(1);   opacity: 1; }
@@ -57,6 +61,7 @@ $fileUrl = filter_var($book['file_path'], FILTER_VALIDATE_URL)
   @media (max-width:576px) {
     .reader-toolbar .title { order:1; width:100%; text-align:center; margin-bottom:.25rem; }
     .reader-toolbar { justify-content:center; }
+    .page-canvas { width:46vw; }
   }
 </style>
 </head>
@@ -85,7 +90,8 @@ $fileUrl = filter_var($book['file_path'], FILTER_VALIDATE_URL)
 
 <div id="pdf-container">
   <div class="page-flip-wrap" id="flipWrap">
-    <canvas id="pageCanvas"></canvas>
+    <div class="page-sheet" id="leftSheet"><canvas id="leftCanvas" class="page-canvas"></canvas></div>
+    <div class="page-sheet" id="rightSheet"><canvas id="rightCanvas" class="page-canvas"></canvas></div>
   </div>
 </div>
 
@@ -101,29 +107,41 @@ let scale = 1.3;
 let rendering = false;
 let saveTimeout = null;
 
-const canvas = document.getElementById('pageCanvas');
-const ctx = canvas.getContext('2d');
+const leftCanvas = document.getElementById('leftCanvas');
+const rightCanvas = document.getElementById('rightCanvas');
+const leftSheet = document.getElementById('leftSheet');
+const rightSheet = document.getElementById('rightSheet');
 const flipWrap = document.getElementById('flipWrap');
 
-function renderPage(num, animate = true) {
+function renderCanvas(page, canvas) {
+  const viewport = page.getViewport({ scale });
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  return page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+}
+
+function renderSpread(num, animate = true) {
   if (rendering) return;
   rendering = true;
-  pdfDoc.getPage(num).then(function (page) {
-    const viewport = page.getViewport({ scale });
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-
-    const renderTask = page.render({ canvasContext: ctx, viewport });
-    renderTask.promise.then(function () {
-      rendering = false;
-      document.getElementById('pageNum').value = num;
-      document.getElementById('readProgress').style.width = (num / pdfDoc.numPages * 100) + '%';
-      if (animate) {
-        flipWrap.classList.add('flipping');
-        setTimeout(() => flipWrap.classList.remove('flipping'), 350);
-      }
-      scheduleSaveProgress(num);
-    });
+  const rightPageNum = num + 1;
+  Promise.all([
+    pdfDoc.getPage(num).then(page => renderCanvas(page, leftCanvas)),
+    rightPageNum <= pdfDoc.numPages
+      ? pdfDoc.getPage(rightPageNum).then(page => renderCanvas(page, rightCanvas))
+      : Promise.resolve()
+  ]).then(function () {
+    rightSheet.classList.toggle('is-empty', rightPageNum > pdfDoc.numPages);
+    rightCanvas.style.display = rightPageNum <= pdfDoc.numPages ? 'block' : 'none';
+    rendering = false;
+    document.getElementById('pageNum').value = num;
+    document.getElementById('readProgress').style.width = (Math.min(rightPageNum, pdfDoc.numPages) / pdfDoc.numPages * 100) + '%';
+    if (animate) {
+      flipWrap.classList.add('flipping');
+      setTimeout(() => flipWrap.classList.remove('flipping'), 350);
+    }
+    scheduleSaveProgress(num);
+  }).catch(function () {
+    rendering = false;
   });
 }
 
@@ -148,19 +166,19 @@ function saveProgress(page) {
 
 document.getElementById('prevPage').addEventListener('click', () => {
   if (pageNum <= 1) return;
-  pageNum--; renderPage(pageNum);
+  pageNum = Math.max(1, pageNum - 2); renderSpread(pageNum);
 });
 document.getElementById('nextPage').addEventListener('click', () => {
   if (pageNum >= pdfDoc.numPages) return;
-  pageNum++; renderPage(pageNum);
+  pageNum = Math.min(pdfDoc.numPages, pageNum + 2); renderSpread(pageNum);
 });
 document.getElementById('pageNum').addEventListener('change', (e) => {
   let n = parseInt(e.target.value) || 1;
   n = Math.max(1, Math.min(n, pdfDoc.numPages));
-  pageNum = n; renderPage(pageNum);
+  pageNum = n; renderSpread(pageNum);
 });
-document.getElementById('zoomIn').addEventListener('click', () => { scale += 0.2; renderPage(pageNum, false); });
-document.getElementById('zoomOut').addEventListener('click', () => { scale = Math.max(0.5, scale - 0.2); renderPage(pageNum, false); });
+document.getElementById('zoomIn').addEventListener('click', () => { scale += 0.2; renderSpread(pageNum, false); });
+document.getElementById('zoomOut').addEventListener('click', () => { scale = Math.max(0.5, scale - 0.2); renderSpread(pageNum, false); });
 document.getElementById('fullscreenBtn').addEventListener('click', () => {
   document.documentElement.requestFullscreen?.();
 });
@@ -171,7 +189,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowLeft') document.getElementById('prevPage').click();
 });
 
-// Navigasi swipe (mobile): geser kiri = halaman berikutnya, geser kanan = sebelumnya
+// Navigasi swipe: satu geseran membalik satu spread.
 (function () {
   const container = document.getElementById('pdf-container');
   const hint = document.createElement('div');
@@ -209,7 +227,7 @@ pdfjsLib.getDocument(url).promise.then(function (doc) {
   pdfDoc = doc;
   document.getElementById('pageCount').textContent = doc.numPages;
   pageNum = Math.min(pageNum, doc.numPages);
-  renderPage(pageNum, false);
+  renderSpread(pageNum, false);
 }).catch(function (err) {
   document.getElementById('pdf-container').innerHTML =
     '<p class="text-light">Gagal memuat file PDF: ' + err.message + '</p>';

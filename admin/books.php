@@ -7,8 +7,9 @@ $q = trim($_GET['q'] ?? '');
 $sql = "SELECT b.*, c.name AS category_name FROM books b LEFT JOIN categories c ON c.id = b.category_id";
 $params = [];
 if ($q !== '') {
-    $sql .= " WHERE b.title LIKE :q OR b.author LIKE :q";
-    $params[':q'] = '%' . $q . '%';
+    $sql .= " WHERE b.title LIKE :q1 OR b.author LIKE :q2";
+    $params[':q1'] = '%' . $q . '%';
+    $params[':q2'] = '%' . $q . '%';
 }
 $sql .= " ORDER BY b.created_at DESC";
 $stmt = $pdo->prepare($sql);

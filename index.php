@@ -24,6 +24,17 @@ $categories = $pdo->query("SELECT * FROM categories ORDER BY name")->fetchAll();
 $todayBook = $pdo->query("SELECT b.*, c.name AS category_name FROM books b
                            LEFT JOIN categories c ON c.id = b.category_id
                            ORDER BY RAND() LIMIT 1")->fetch();
+
+/** Ikon per kategori — kosmetik saja, jatuh ke ikon default kalau nama tidak dikenali. */
+function category_icon(string $name): string {
+    $map = [
+        'cerita' => 'bi-stars', 'sains' => 'bi-flask', 'matematika' => 'bi-calculator',
+        'sejarah' => 'bi-hourglass-split', 'ips' => 'bi-globe-asia-australia',
+        'literasi' => 'bi-mortarboard', 'muatan lokal' => 'bi-flower1',
+        'pengetahuan umum' => 'bi-lightbulb',
+    ];
+    return $map[mb_strtolower($name)] ?? 'bi-journal-bookmark';
+}
 ?>
 
 <section class="hero-section">
@@ -37,8 +48,13 @@ $todayBook = $pdo->query("SELECT b.*, c.name AS category_name FROM books b
         <div class="hero-actions">
           <a href="<?= BASE_URL ?>/katalog.php" class="btn btn-turmeric btn-lg"><i class="bi bi-search"></i> Jelajahi Katalog</a>
           <?php if (!$user): ?>
-          <a href="<?= BASE_URL ?>/register.php" class="btn btn-outline-light btn-lg" style="border-radius:999px;">Daftar Gratis</a>
+          <a href="<?= BASE_URL ?>/register.php" class="btn btn-outline-light btn-lg" style="border-radius:13px;">Daftar Gratis</a>
           <?php endif; ?>
+        </div>
+        <div class="hero-facts">
+          <span class="fact"><i class="bi bi-check-circle-fill"></i> 100% gratis</span>
+          <span class="fact"><i class="bi bi-check-circle-fill"></i> Progress baca tersimpan otomatis</span>
+          <span class="fact"><i class="bi bi-check-circle-fill"></i> Jenjang SD–SMA/SMK</span>
         </div>
       </div>
       <div class="col-lg-5 d-none d-lg-block">
@@ -88,7 +104,36 @@ $todayBook = $pdo->query("SELECT b.*, c.name AS category_name FROM books b
   </div>
 </div>
 
-<div class="container mt-5">
+<div class="container feature-band mt-5">
+  <div class="row g-3">
+    <div class="col-md-3 col-6">
+      <div class="feature-item">
+        <span class="feature-icon chip-forest"><i class="bi bi-cash-coin"></i></span>
+        <div><h6>100% Gratis</h6><p>Tanpa biaya langganan untuk siswa dan guru di Desa Pamulihan.</p></div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="feature-item">
+        <span class="feature-icon chip-turmeric"><i class="bi bi-bookmark-check"></i></span>
+        <div><h6>Lanjut dari Terakhir</h6><p>Progress halaman tersimpan otomatis tiap kali membaca.</p></div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="feature-item">
+        <span class="feature-icon chip-clay"><i class="bi bi-mortarboard"></i></span>
+        <div><h6>Sesuai Jenjang</h6><p>Kurasi buku dari SD hingga SMA/SMK, termasuk muatan lokal Sunda.</p></div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="feature-item">
+        <span class="feature-icon chip-ink"><i class="bi bi-phone"></i></span>
+        <div><h6>Akses di HP</h6><p>Tidak perlu laptop — buka lewat browser HP kapan saja.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container mt-4">
 
   <?php if ($todayBook): ?>
   <div class="today-read-card p-4 mb-5 reveal">
@@ -118,7 +163,7 @@ $todayBook = $pdo->query("SELECT b.*, c.name AS category_name FROM books b
   <div class="d-flex flex-wrap gap-2 mb-5">
     <?php foreach ($categories as $cat): ?>
       <a href="<?= BASE_URL ?>/katalog.php?category=<?= (int)$cat['id'] ?>" class="chip">
-        <?= htmlspecialchars($cat['name']) ?>
+        <i class="bi <?= category_icon($cat['name']) ?>"></i> <?= htmlspecialchars($cat['name']) ?>
       </a>
     <?php endforeach; ?>
   </div>

@@ -81,15 +81,21 @@ $initial = mb_strtoupper(mb_substr($user['name'] ?? 'A', 0, 1));
 
   <div class="admin-main">
     <div class="admin-topbar">
-      <div class="d-flex align-items-center gap-3">
+      <div class="d-flex align-items-center gap-3 min-w-0">
         <button class="admin-menu-toggle" id="adminMenuToggle" type="button" aria-label="Buka menu">
           <i class="bi bi-list fs-5"></i>
         </button>
-        <div>
+        <div class="min-w-0">
           <div class="crumb">Admin / <?= htmlspecialchars(admin_page_title($current)) ?></div>
-          <h1><?= isset($page_title) ? htmlspecialchars($page_title) : 'Dashboard' ?></h1>
+          <h1 class="text-truncate"><?= isset($page_title) ? htmlspecialchars($page_title) : 'Dashboard' ?></h1>
         </div>
       </div>
+
+      <form action="<?= BASE_URL ?>/admin/books.php" method="get" class="admin-topbar-search">
+        <i class="bi bi-search"></i>
+        <input type="text" name="q" placeholder="Cari buku di katalog admin...">
+      </form>
+
       <div class="admin-user">
         <div class="who">
           <strong><?= htmlspecialchars($user['name']) ?></strong>

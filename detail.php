@@ -43,51 +43,55 @@ if ($user) {
     </ol>
   </nav>
 
-  <div class="row g-4">
-    <div class="col-md-3">
-      <div class="rounded shadow w-100 overflow-hidden" style="aspect-ratio:2/3;">
-        <?= book_cover_html($book) ?>
-      </div>
-    </div>
-    <div class="col-md-9">
-      <span class="badge badge-grade me-1"><?= htmlspecialchars($book['category_name'] ?? 'Tanpa kategori') ?></span>
-      <span class="badge" style="background:var(--clay-100); color:var(--clay-600);"><?= htmlspecialchars($book['grade_level']) ?></span>
-      <h2 class="mt-2"><?= htmlspecialchars($book['title']) ?></h2>
-      <p class="text-muted mb-1">Penulis: <?= htmlspecialchars($book['author'] ?? '-') ?></p>
-      <p class="text-muted mb-3">
-        <?= $book['publisher'] ? 'Penerbit: ' . htmlspecialchars($book['publisher']) . ' &middot; ' : '' ?>
-        <?= $book['year_published'] ? 'Tahun: ' . htmlspecialchars((string)$book['year_published']) : '' ?>
-        &middot; <i class="bi bi-eye"></i> <?= (int)$book['views'] ?> dibaca
-      </p>
-      <p><?= nl2br(htmlspecialchars($book['description'] ?? 'Belum ada sinopsis.')) ?></p>
-
-      <?php if ($progress): ?>
-        <div class="alert py-2 small" style="background:var(--turmeric-100); border:1px solid var(--turmeric-400); color:var(--ink-800);">
-          <i class="bi bi-bookmark-fill" style="color:var(--clay-500);"></i> Kamu terakhir membaca sampai halaman <strong><?= (int)$progress['current_page'] ?></strong>.
+  <div class="detail-panel">
+    <div class="row g-4">
+      <div class="col-md-3">
+        <div class="rounded-4 shadow w-100 overflow-hidden" style="aspect-ratio:2/3;">
+          <?= book_cover_html($book) ?>
         </div>
-      <?php endif; ?>
-
-      <div class="d-flex gap-2 flex-wrap">
-        <?php if ($book['file_path']): ?>
-          <a href="<?= BASE_URL ?>/baca.php?id=<?= $book['id'] ?>" class="btn btn-forest btn-lg">
-            <i class="bi bi-book"></i> <?= $progress ? 'Lanjutkan Membaca' : 'Baca Buku' ?>
-          </a>
-        <?php else: ?>
-          <button class="btn btn-secondary btn-lg" disabled>File belum tersedia</button>
-        <?php endif; ?>
-
         <?php if ($book['is_downloadable'] && $book['file_path']): ?>
-          <a href="<?= filter_var($book['file_path'], FILTER_VALIDATE_URL) ? htmlspecialchars($book['file_path']) : UPLOAD_BOOK_URL . htmlspecialchars($book['file_path']) ?>" class="btn btn-outline-forest btn-lg" download>
-            <i class="bi bi-download"></i> Unduh
+          <a href="<?= filter_var($book['file_path'], FILTER_VALIDATE_URL) ? htmlspecialchars($book['file_path']) : UPLOAD_BOOK_URL . htmlspecialchars($book['file_path']) ?>" class="btn btn-outline-forest w-100 mt-3" download>
+            <i class="bi bi-download"></i> Unduh PDF
           </a>
         <?php endif; ?>
+      </div>
+      <div class="col-md-9">
+        <div class="d-flex gap-2 flex-wrap mb-3">
+          <span class="badge badge-grade"><?= htmlspecialchars($book['category_name'] ?? 'Tanpa kategori') ?></span>
+          <span class="badge" style="background:var(--clay-100); color:var(--clay-600);"><?= htmlspecialchars($book['grade_level']) ?></span>
+        </div>
+        <h2 class="mb-2"><?= htmlspecialchars($book['title']) ?></h2>
 
-        <?php if ($user): ?>
-          <button id="favBtn" data-book="<?= $book['id'] ?>" data-active="<?= $isFavorite ? 1 : 0 ?>"
-                  class="btn btn-lg" style="border:1.5px solid var(--clay-500); color:var(--clay-600); background:transparent; border-radius:999px;">
-            <i class="bi <?= $isFavorite ? 'bi-heart-fill' : 'bi-heart' ?>"></i> Favorit
-          </button>
+        <ul class="detail-meta">
+          <li><i class="bi bi-person"></i> <?= htmlspecialchars($book['author'] ?: 'Penulis tidak diketahui') ?></li>
+          <?php if ($book['publisher']): ?><li><i class="bi bi-building"></i> <?= htmlspecialchars($book['publisher']) ?></li><?php endif; ?>
+          <?php if ($book['year_published']): ?><li><i class="bi bi-calendar3"></i> <?= htmlspecialchars((string)$book['year_published']) ?></li><?php endif; ?>
+          <li><i class="bi bi-eye"></i> <?= (int)$book['views'] ?> dibaca</li>
+        </ul>
+
+        <p class="detail-synopsis"><?= nl2br(htmlspecialchars($book['description'] ?: 'Belum ada sinopsis.')) ?></p>
+
+        <?php if ($progress): ?>
+          <div class="progress-note mb-3">
+            <i class="bi bi-bookmark-fill"></i> Kamu terakhir membaca sampai halaman <strong><?= (int)$progress['current_page'] ?></strong>.
+          </div>
         <?php endif; ?>
+
+        <div class="d-flex gap-2 flex-wrap">
+          <?php if ($book['file_path']): ?>
+            <a href="<?= BASE_URL ?>/baca.php?id=<?= $book['id'] ?>" class="btn btn-forest btn-lg">
+              <i class="bi bi-book"></i> <?= $progress ? 'Lanjutkan Membaca' : 'Baca Buku' ?>
+            </a>
+          <?php else: ?>
+            <button class="btn btn-secondary btn-lg" disabled>File belum tersedia</button>
+          <?php endif; ?>
+
+          <?php if ($user): ?>
+            <button id="favBtn" data-book="<?= $book['id'] ?>" data-active="<?= $isFavorite ? 1 : 0 ?>" class="btn btn-lg btn-fav <?= $isFavorite ? 'is-active' : '' ?>">
+              <i class="bi <?= $isFavorite ? 'bi-heart-fill' : 'bi-heart' ?>"></i> Favorit
+            </button>
+          <?php endif; ?>
+        </div>
       </div>
     </div>
   </div>
@@ -104,9 +108,8 @@ document.getElementById('favBtn')?.addEventListener('click', async function () {
   const data = await res.json();
   if (data.status === 'ok') {
     btn.dataset.active = data.active ? 1 : 0;
+    btn.classList.toggle('is-active', data.active);
     btn.querySelector('i').className = 'bi ' + (data.active ? 'bi-heart-fill' : 'bi-heart');
-    btn.style.background = data.active ? 'var(--clay-500)' : 'transparent';
-    btn.style.color = data.active ? '#fff' : 'var(--clay-600)';
   }
 });
 </script>
