@@ -1,7 +1,7 @@
 <?php
 /**
  * JALANKAN SEKALI SAJA setelah import database.sql, lalu HAPUS file ini.
- * Akses lewat browser: http://localhost/pamulihan-elibrary/setup_admin.php
+ * Akses lewat browser: http://localhost/ebook/setup_admin.php
  */
 require_once __DIR__ . '/config/db.php';
 
