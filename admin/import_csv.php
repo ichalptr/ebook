@@ -26,7 +26,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'impor
             $header = array_map(fn($h) => strtolower(trim($h)), $header);
             $expected = ['title','author','publisher','year','isbn','description','grade_level','category','cover_url','pdf_url','downloadable'];
 
-            $checkStmt = $pdo->prepare("SELECT id FROM books WHERE title = :t AND (author = :a OR :a = '')");
+            // Fix: :a dipakai 2x di query asli (author = :a OR :a = '') memicu
+            // "SQLSTATE[HY093]: Invalid parameter number" di MySQL native prepared
+            // statement (PDO::ATTR_EMULATE_PREPARES => false di config/db.php).
+            // Solusi: beri nama placeholder terpisah utk tiap kemunculan, walau
+            // nilainya sama.
+            $checkStmt = $pdo->prepare("SELECT id FROM books WHERE title = :t AND (author = :a1 OR :a2 = '')");
             $insertStmt = $pdo->prepare("INSERT INTO books (title, author, publisher, year_published, isbn,
                 description, grade_level, category_id, cover_image, file_path, is_downloadable, source)
                 VALUES (:t, :a, :pub, :y, :isbn, :d, :g, :c, :cov, :f, :dl, 'manual')");
@@ -46,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'impor
                 }
 
                 $author = trim($data['author'] ?? '');
-                $checkStmt->execute([':t' => $title, ':a' => $author]);
+                $checkStmt->execute([':t' => $title, ':a1' => $author, ':a2' => $author]);
                 if ($checkStmt->fetch()) {
                     $log[] = "⏭️ Baris $rowNum \"$title\" dilewati (judul+penulis sudah ada).";
                     $skipped++;

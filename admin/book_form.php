@@ -1,6 +1,7 @@
 <?php
 $page_title = 'Form Buku';
 require_once __DIR__ . '/../includes/admin_header.php';
+require_once __DIR__ . '/../includes/cover_helper.php';
 
 $id = (int)($_GET['id'] ?? 0);
 $book = [
@@ -94,90 +95,132 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+$isEdit = (bool)$book['id'];
 ?>
 
-<div class="card p-4" style="max-width:700px;">
-  <?php if ($error): ?><div class="alert alert-danger"><?= htmlspecialchars($error) ?></div><?php endif; ?>
-  <form method="post" enctype="multipart/form-data">
-    <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="admin-card admin-form-card">
+      <div class="admin-card-pad">
+        <div class="admin-section-title mb-1">
+          <i class="bi <?= $isEdit ? 'bi-pencil-square' : 'bi-plus-circle' ?>" style="color:var(--forest-600);"></i>
+          <?= $isEdit ? 'Edit Buku' : 'Tambah Buku Baru' ?>
+        </div>
+        <p class="text-muted small mb-4">Lengkapi detail di bawah. Kolom bertanda * wajib diisi.</p>
 
-    <div class="mb-3">
-      <label class="form-label">Judul Buku *</label>
-      <input type="text" name="title" class="form-control" value="<?= htmlspecialchars($book['title']) ?>" required>
-    </div>
-    <div class="row">
-      <div class="col-md-6 mb-3">
-        <label class="form-label">Penulis</label>
-        <input type="text" name="author" class="form-control" value="<?= htmlspecialchars($book['author'] ?? '') ?>">
-      </div>
-      <div class="col-md-6 mb-3">
-        <label class="form-label">Penerbit</label>
-        <input type="text" name="publisher" class="form-control" value="<?= htmlspecialchars($book['publisher'] ?? '') ?>">
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-4 mb-3">
-        <label class="form-label">Tahun Terbit</label>
-        <input type="number" name="year_published" class="form-control" value="<?= htmlspecialchars((string)($book['year_published'] ?? '')) ?>">
-      </div>
-      <div class="col-md-4 mb-3">
-        <label class="form-label">ISBN</label>
-        <input type="text" name="isbn" class="form-control" value="<?= htmlspecialchars($book['isbn'] ?? '') ?>">
-      </div>
-      <div class="col-md-4 mb-3">
-        <label class="form-label">Jenjang</label>
-        <select name="grade_level" class="form-select">
-          <?php foreach (['SD','SMP','SMA/SMK','Umum'] as $g): ?>
-            <option value="<?= $g ?>" <?= $book['grade_level'] === $g ? 'selected' : '' ?>><?= $g ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Kategori</label>
-      <select name="category_id" class="form-select">
-        <option value="">- Pilih Kategori -</option>
-        <?php foreach ($categories as $cat): ?>
-          <option value="<?= $cat['id'] ?>" <?= (string)$book['category_id'] === (string)$cat['id'] ? 'selected' : '' ?>>
-            <?= htmlspecialchars($cat['name']) ?>
-          </option>
-        <?php endforeach; ?>
-      </select>
-    </div>
-    <div class="mb-3">
-      <label class="form-label">Sinopsis</label>
-      <textarea name="description" class="form-control" rows="4"><?= htmlspecialchars($book['description'] ?? '') ?></textarea>
-    </div>
+        <?php if ($error): ?><div class="alert alert-danger"><i class="bi bi-exclamation-circle"></i> <?= htmlspecialchars($error) ?></div><?php endif; ?>
 
-    <div class="row">
-      <div class="col-md-6 mb-3">
-        <label class="form-label">Cover Buku (jpg/png/webp)</label>
-        <input type="file" name="cover" class="form-control" accept="image/*">
-        <?php if ($book['cover_image']): ?>
-          <small class="text-muted">Sudah ada: <?= htmlspecialchars($book['cover_image']) ?></small>
-        <?php endif; ?>
-      </div>
-      <div class="col-md-6 mb-3">
-        <label class="form-label">File Buku (PDF)</label>
-        <input type="file" name="book_file" class="form-control" accept="application/pdf">
-        <?php if ($book['file_path']): ?>
-          <small class="text-muted">Sudah ada: <?= htmlspecialchars($book['file_path']) ?></small>
-        <?php endif; ?>
-        <div class="text-center small text-muted my-1">atau</div>
-        <input type="url" name="file_url" class="form-control" placeholder="Tempel link PDF resmi (contoh: dari SIBI/buku.kemendikdasmen.go.id)"
-               value="<?= filter_var($book['file_path'] ?? '', FILTER_VALIDATE_URL) ? htmlspecialchars($book['file_path']) : '' ?>">
-        <small class="text-muted">Jika diisi, link ini dipakai langsung (tanpa upload) — server buku tetap di sumber resminya.</small>
+        <form method="post" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+
+          <div class="admin-form-section">
+            <span class="admin-form-eyebrow">Informasi Dasar</span>
+            <div class="mb-3">
+              <label class="form-label">Judul Buku *</label>
+              <input type="text" name="title" class="form-control" value="<?= htmlspecialchars($book['title']) ?>" required>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Penulis</label>
+                <input type="text" name="author" class="form-control" value="<?= htmlspecialchars($book['author'] ?? '') ?>">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Penerbit</label>
+                <input type="text" name="publisher" class="form-control" value="<?= htmlspecialchars($book['publisher'] ?? '') ?>">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Tahun Terbit</label>
+                <input type="number" name="year_published" class="form-control" value="<?= htmlspecialchars((string)($book['year_published'] ?? '')) ?>">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">ISBN</label>
+                <input type="text" name="isbn" class="form-control" value="<?= htmlspecialchars($book['isbn'] ?? '') ?>">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Jenjang</label>
+                <select name="grade_level" class="form-select">
+                  <?php foreach (['SD','SMP','SMA/SMK','Umum'] as $g): ?>
+                    <option value="<?= $g ?>" <?= $book['grade_level'] === $g ? 'selected' : '' ?>><?= $g ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+            </div>
+            <div class="mb-1">
+              <label class="form-label">Kategori</label>
+              <select name="category_id" class="form-select">
+                <option value="">- Pilih Kategori -</option>
+                <?php foreach ($categories as $cat): ?>
+                  <option value="<?= $cat['id'] ?>" <?= (string)$book['category_id'] === (string)$cat['id'] ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($cat['name']) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+          </div>
+
+          <div class="admin-form-section">
+            <span class="admin-form-eyebrow">Sinopsis</span>
+            <textarea name="description" class="form-control" rows="4" placeholder="Ringkasan singkat isi buku..."><?= htmlspecialchars($book['description'] ?? '') ?></textarea>
+          </div>
+
+          <div class="admin-form-section">
+            <span class="admin-form-eyebrow">Cover &amp; File</span>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Cover Buku (jpg/png/webp)</label>
+                <input type="file" name="cover" class="form-control" accept="image/*">
+                <?php if ($book['cover_image']): ?>
+                  <small class="text-muted d-block mt-1"><i class="bi bi-check-circle text-success"></i> Sudah ada: <?= htmlspecialchars($book['cover_image']) ?></small>
+                <?php else: ?>
+                  <small class="text-muted d-block mt-1">Kosongkan untuk memakai cover otomatis (gradient + inisial judul).</small>
+                <?php endif; ?>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">File Buku (PDF)</label>
+                <input type="file" name="book_file" class="form-control" accept="application/pdf">
+                <?php if ($book['file_path']): ?>
+                  <small class="text-muted d-block mt-1"><i class="bi bi-check-circle text-success"></i> Sudah ada: <?= htmlspecialchars($book['file_path']) ?></small>
+                <?php endif; ?>
+                <div class="text-center small text-muted my-2">— atau —</div>
+                <input type="url" name="file_url" class="form-control" placeholder="Tempel link PDF resmi (SIBI/buku.kemendikdasmen.go.id)"
+                       value="<?= filter_var($book['file_path'] ?? '', FILTER_VALIDATE_URL) ? htmlspecialchars($book['file_path']) : '' ?>">
+                <small class="text-muted d-block mt-1">Jika diisi, link ini dipakai langsung — server tidak menyimpan filenya.</small>
+              </div>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" name="is_downloadable" class="form-check-input" id="dl" <?= $book['is_downloadable'] ? 'checked' : '' ?>>
+              <label class="form-check-label" for="dl">Izinkan siswa mengunduh file PDF</label>
+            </div>
+          </div>
+
+          <button class="btn btn-forest"><i class="bi bi-save"></i> Simpan Buku</button>
+          <a href="<?= BASE_URL ?>/admin/books.php" class="btn btn-outline-forest">Batal</a>
+        </form>
       </div>
     </div>
+  </div>
 
-    <div class="form-check mb-4">
-      <input type="checkbox" name="is_downloadable" class="form-check-input" id="dl" <?= $book['is_downloadable'] ? 'checked' : '' ?>>
-      <label class="form-check-label" for="dl">Izinkan siswa mengunduh file PDF</label>
+  <div class="col-lg-4">
+    <div class="admin-card admin-card-pad text-center">
+      <span class="admin-form-eyebrow d-block">Pratinjau Cover</span>
+      <div class="mx-auto rounded shadow-sm overflow-hidden" style="width:150px;aspect-ratio:2/3;">
+        <?= book_cover_html($book) ?>
+      </div>
+      <p class="small text-muted mt-3 mb-0">
+        <?= $book['cover_image'] ? 'Cover kustom akan dipakai.' : 'Belum ada cover — sistem membuat cover otomatis dari judul buku.' ?>
+      </p>
     </div>
-
-    <button class="btn btn-success"><i class="bi bi-save"></i> Simpan Buku</button>
-    <a href="<?= BASE_URL ?>/admin/books.php" class="btn btn-outline-secondary">Batal</a>
-  </form>
+    <div class="admin-card admin-card-pad mt-3">
+      <span class="admin-form-eyebrow d-block">Sumber PDF Legal</span>
+      <p class="small text-muted mb-2">Untuk buku paket sekolah, ambil PDF resmi dari SIBI:</p>
+      <a href="https://buku.kemendikdasmen.go.id/katalog" target="_blank" class="btn btn-sm btn-outline-forest w-100">
+        <i class="bi bi-box-arrow-up-right"></i> Buka SIBI
+      </a>
+    </div>
+  </div>
 </div>
 
 <?php require_once __DIR__ . '/../includes/admin_footer.php'; ?>
