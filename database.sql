@@ -18,6 +18,12 @@ CREATE TABLE users (
     role ENUM('admin','teacher','student') NOT NULL DEFAULT 'student',
     school VARCHAR(150) DEFAULT NULL,
     grade_level VARCHAR(20) DEFAULT NULL,   -- SD/SMP/SMA/SMK
+    failed_attempts INT NOT NULL DEFAULT 0,     -- percobaan login gagal beruntun
+    locked_until TIMESTAMP NULL DEFAULT NULL,   -- akun terkunci sementara sampai waktu ini
+    email_verified_at TIMESTAMP NULL DEFAULT NULL, -- NULL = belum verifikasi email
+    verification_token VARCHAR(64) DEFAULT NULL,
+    reset_token VARCHAR(64) DEFAULT NULL,
+    reset_expires TIMESTAMP NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -80,6 +86,22 @@ CREATE TABLE favorites (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY unique_fav (user_id, book_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------
+-- Tabel: recommendations (guru merekomendasikan buku ke siswa)
+-- ---------------------------------------------------
+CREATE TABLE recommendations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    teacher_id INT NOT NULL,
+    student_id INT NOT NULL,
+    book_id INT NOT NULL,
+    note VARCHAR(255) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_recommendation (teacher_id, student_id, book_id),
+    FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 

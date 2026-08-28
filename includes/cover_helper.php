@@ -41,29 +41,20 @@ function book_initial(string $title): string {
     return $chars;
 }
 
-/**
- * $imgClass: kelas tambahan (opsional), contoh: 'row-thumb'.
- * Semua output SELALU membawa kelas dasar "cover-media" (lihat style.css)
- * supaya cover/generated-cover selalu mengisi penuh wrapper-nya
- * (width/height 100%, object-fit cover) — tidak bergantung pada pemanggil
- * mengingat untuk menambahkan sizing sendiri.
- */
 function book_cover_html(array $book, string $imgClass = ''): string {
     $src = cover_src($book);
     $title = htmlspecialchars($book['title'] ?? '');
-    $classes = trim('cover-media ' . $imgClass);
 
     if ($src) {
-        return '<img src="' . $src . '" class="' . htmlspecialchars($classes) . '" alt="' . $title . '" loading="lazy">';
+        return '<img src="' . $src . '" class="' . htmlspecialchars($imgClass) . '" alt="' . $title . '" loading="lazy">';
     }
 
     $palettes = cover_palettes();
     $hash = crc32((string)($book['title'] ?? ''));
     [$c1, $c2] = $palettes[$hash % count($palettes)];
     $initial = htmlspecialchars(book_initial($book['title'] ?? ''));
-    $genClasses = trim($classes . ' generated-cover');
 
-    return '<div class="' . htmlspecialchars($genClasses) . '" style="background:linear-gradient(150deg,' . $c1 . ',' . $c2 . ');">'
+    return '<div class="generated-cover" style="background:linear-gradient(150deg,' . $c1 . ',' . $c2 . ');">'
          . '<span class="initial">' . $initial . '</span>'
          . '<span class="cover-title">' . $title . '</span>'
          . '</div>';

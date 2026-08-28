@@ -33,8 +33,9 @@ import metadata buku otomatis dari Google Books API.
 ```
 pamulihan-elibrary/
 ├── config/db.php          # koneksi database & konstanta path
-├── includes/               # header, footer, auth, admin layout
+├── includes/               # header, footer, auth, admin & guru layout
 ├── admin/                  # dashboard admin (CRUD buku, kategori, user, import)
+├── guru/                   # dashboard guru (rekomendasi buku ke siswa)
 ├── ajax/                   # endpoint AJAX (simpan progress baca, favorit)
 ├── uploads/covers/         # cover buku ter-upload
 ├── uploads/books/          # file PDF buku ter-upload
@@ -44,9 +45,14 @@ pamulihan-elibrary/
 ├── detail.php                Detail buku
 ├── baca.php                  Reader PDF (PDF.js, progress otomatis tersimpan)
 ├── login.php / register.php / logout.php
-├── rak_saya.php              Favorit & lanjutkan membaca (siswa)
+├── verify.php                Verifikasi email dari link
+├── resend_verification.php   Kirim ulang link verifikasi
+├── forgot_password.php       Form minta link reset password
+├── reset_password.php        Form set password baru dari link reset
+├── rak_saya.php              Favorit, lanjutkan membaca & rekomendasi guru (siswa)
 ├── setup_admin.php           Setup admin pertama (hapus setelah dipakai!)
-└── database.sql              Skema database + data awal
+├── database.sql              Skema database + data awal (setup baru)
+└── migration_v2.sql          Migrasi buat database lama (guru + rate limit login)
 ```
 
 ## 4. Alur Pemakaian
@@ -64,14 +70,47 @@ pamulihan-elibrary/
 3. Progress halaman otomatis tersimpan — saat buku dibuka lagi, akan lanjut dari halaman terakhir.
 4. Buku favorit & riwayat baca bisa dilihat di *Rak Saya*.
 
-## 5. Pengembangan Lanjutan (opsional)
-- Dashboard Guru untuk merekomendasikan buku ke siswa (folder `guru/` belum dibuat — tinggal
-  contek pola di `admin/` karena struktur role sudah tersedia di tabel `users`).
+## 5. Dashboard Guru & Keamanan Login
+
+Folder `guru/` berisi dashboard khusus role `teacher`:
+- `guru/dashboard.php` — statistik siswa terdaftar & rekomendasi yang sudah dikirim.
+- `guru/rekomendasi.php` — form untuk merekomendasikan buku ke siswa tertentu (dengan catatan opsional).
+
+Siswa melihat rekomendasi yang masuk di `rak_saya.php`, tab **Rekomendasi Guru**.
+
+Selain itu, `login.php` sekarang punya rate limiting sederhana: akun otomatis terkunci 5 menit
+setelah 5 kali percobaan password salah berturut-turut (kolom `failed_attempts` & `locked_until`
+di tabel `users`).
+
+**Verifikasi Email & Lupa Password:**
+- Saat daftar (`register.php`), akun belum aktif sampai email diverifikasi lewat link di `verify.php`.
+- Login diblokir kalau email belum diverifikasi (ada tombol "kirim ulang" via `resend_verification.php`).
+- Lupa password lewat `forgot_password.php` → link reset (berlaku 1 jam) → `reset_password.php`.
+- Pengiriman email pakai SMTP sederhana di `includes/mailer.php` (tanpa Composer/PHPMailer).
+  **Kosongkan `SMTP_USER` di `config/db.php`** kalau belum mau setting email asli — sistem otomatis
+  menampilkan link verifikasi/reset **langsung di layar** (mode dev, aman buat development di
+  localhost). Untuk email beneran, isi `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` di `config/db.php`
+  (misal pakai Gmail App Password).
+- Akun admin yang dibuat lewat `setup_admin.php` otomatis terverifikasi, tidak perlu cek email.
+
+**Pagination Katalog:** `katalog.php` sekarang menampilkan 12 buku per halaman, dengan navigasi
+halaman di bagian bawah (filter pencarian/kategori/jenjang tetap terbawa saat pindah halaman).
+
+**Setup kalau database kamu sudah pernah di-import dari `database.sql` versi lama** (belum ada
+kolom `failed_attempts`/`locked_until`/`email_verified_at`/dst atau tabel `recommendations`),
+jalankan migrasi ini SATU KALI:
+```
+mysql -u root -p pamulihan_elibrary < migration_v2.sql
+```
+Kalau baru setup dari nol, cukup import `database.sql` — perubahan ini sudah termasuk di dalamnya,
+tidak perlu jalankan `migration_v2.sql` lagi.
+
+## 6. Pengembangan Lanjutan (opsional)
 - Tantangan membaca / badge, statistik per sekolah.
 - Flipbook animasi 2 halaman sekaligus (saat ini reader sudah pakai animasi flip 1 halaman + page turning via PDF.js).
 - Ganti Google Books API dengan Open Library API sebagai sumber tambahan.
 
-## 6. Bookmarklet "Clip ke E-Library" (ala Mendeley Web Importer)
+## 7. Bookmarklet "Clip ke E-Library" (ala Mendeley Web Importer)
 
 Untuk mengambil **metadata + link PDF sekaligus** dengan sekali klik saat kamu sedang membuka halaman
 buku di SIBI (atau situs buku lain), gunakan menu **Admin → Bookmarklet**.
@@ -94,7 +133,7 @@ konsisten terbaca. Kalau link PDF kosong, tinggal salin manual dari tombol unduh
 robots.txt. Bookmarklet ini menghormati batas itu karena tetap dijalankan oleh manusia yang mengakses
 halaman secara normal lewat browser — persis seperti kamu klik kanan → save as, hanya lebih cepat.
 
-## 7. Import Otomatis Metadata Resmi (Kemendikdasmen)
+## 8. Import Otomatis Metadata Resmi (Kemendikdasmen)
 
 **Ini beda dari SIBI** — Pusat Perbukuan Kemendikdasmen ternyata menyediakan **data terbuka** (bukan
 lewat SIBI, tapi lewat Data Acuan SIPLah) yang BISA diakses otomatis oleh program:
@@ -110,7 +149,7 @@ filter jenjang/mapel, pilih buku, import sekali klik. Setelah metadata masuk, fi
 ditambahkan manual dari SIBI lewat menu Edit Buku (tempel link atau upload) — karena kedua sumber ini
 saling melengkapi: data resmi untuk metadata, SIBI untuk file bacanya.
 
-## 8. Sumber Buku Paket Sekolah GRATIS & LEGAL
+## 9. Sumber Buku Paket Sekolah GRATIS & LEGAL
 
 Untuk mengisi katalog dengan **buku paket sekolah** (bukan hanya cerita anak), gunakan **SIBI (Sistem
 Informasi Perbukuan Indonesia)** — portal resmi Pusat Perbukuan, Kemendikdasmen:

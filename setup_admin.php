@@ -21,7 +21,7 @@ if (!$done && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($name && $email && strlen($password) >= 6) {
         $hash = password_hash($password, PASSWORD_DEFAULT);
-        $stmt = $pdo->prepare("INSERT INTO users (name, email, password, role) VALUES (:n, :e, :p, 'admin')");
+        $stmt = $pdo->prepare("INSERT INTO users (name, email, password, role, email_verified_at) VALUES (:n, :e, :p, 'admin', NOW())");
         $stmt->execute([':n' => $name, ':e' => $email, ':p' => $hash]);
         $message = 'Akun admin berhasil dibuat! Silakan hapus file setup_admin.php sekarang, lalu login di login.php.';
         $done = true;

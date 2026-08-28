@@ -4,39 +4,6 @@ require_once __DIR__ . '/auth.php';
 require_role('admin');
 $user = current_user();
 $current = basename($_SERVER['PHP_SELF']);
-
-/** Struktur menu admin, dikelompokkan per bagian agar sidebar mudah dipindai. */
-$adminMenu = [
-    'Utama' => [
-        ['dashboard.php', 'bi-speedometer2', 'Dashboard'],
-    ],
-    'Konten' => [
-        ['books.php', 'bi-journal-bookmark', 'Semua Buku'],
-        ['book_form.php', 'bi-plus-circle', 'Tambah Buku'],
-        ['categories.php', 'bi-tags', 'Kategori'],
-    ],
-    'Import' => [
-        ['bookmarklet.php', 'bi-bookmark-star', 'Bookmarklet SIBI'],
-        ['import_official.php', 'bi-bank', 'Resmi Kemendikdasmen'],
-        ['import_books.php', 'bi-cloud-download', 'Google Books (Satu)'],
-        ['bulk_import.php', 'bi-cloud-arrow-down', 'Google Books (Bulk)'],
-        ['import_csv.php', 'bi-filetype-csv', 'Import CSV'],
-    ],
-    'Pengguna' => [
-        ['users.php', 'bi-people', 'Pengguna'],
-    ],
-];
-
-function admin_page_title(string $current): string {
-    $map = [
-        'dashboard.php' => 'Dashboard', 'books.php' => 'Semua Buku', 'book_form.php' => 'Form Buku',
-        'categories.php' => 'Kategori', 'users.php' => 'Pengguna', 'bookmarklet.php' => 'Bookmarklet Import',
-        'import_official.php' => 'Import Resmi Kemendikdasmen', 'import_books.php' => 'Import Buku (Google Books)',
-        'bulk_import.php' => 'Bulk Import (Google Books)', 'import_csv.php' => 'Import CSV', 'quick_add.php' => 'Quick Add',
-    ];
-    return $map[$current] ?? 'Admin';
-}
-$initial = mb_strtoupper(mb_substr($user['name'] ?? 'A', 0, 1));
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -47,62 +14,35 @@ $initial = mb_strtoupper(mb_substr($user['name'] ?? 'A', 0, 1));
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 <link href="<?= BASE_URL ?>/assets/css/style.css" rel="stylesheet">
-<link href="<?= BASE_URL ?>/assets/css/admin.css" rel="stylesheet">
+<style>
+  .admin-wrap { display:flex; min-height:100vh; }
+  .admin-sidebar { width:230px; background:#1c1c1c; color:#fff; flex-shrink:0; }
+  .admin-sidebar a { color:#ccc; display:block; padding:.6rem 1.2rem; text-decoration:none; }
+  .admin-sidebar a.active, .admin-sidebar a:hover { background:#1f7a3d; color:#fff; }
+  .admin-sidebar .brand { padding:1.2rem; font-weight:700; border-bottom:1px solid #333; }
+  .admin-main { flex:1; padding:1.5rem 2rem; background:#f4f6f5; }
+</style>
 </head>
-<body class="admin-body">
-<div class="admin-backdrop" id="adminBackdrop"></div>
-<div class="admin-shell">
-
-  <aside class="admin-sidebar" id="adminSidebar">
-    <div class="admin-brand">
-      <span class="brand-mark"><i class="bi bi-book-half"></i></span>
-      <span class="brand-text">
-        <strong>E-Library Admin</strong>
-        <span>Desa Pamulihan</span>
-      </span>
-    </div>
-
-    <nav class="admin-nav">
-      <?php foreach ($adminMenu as $section => $items): ?>
-        <div class="admin-nav-label"><?= htmlspecialchars($section) ?></div>
-        <?php foreach ($items as [$href, $icon, $label]): ?>
-          <a href="<?= BASE_URL ?>/admin/<?= $href ?>" class="<?= $current === $href ? 'active' : '' ?>">
-            <i class="bi <?= $icon ?>"></i> <?= htmlspecialchars($label) ?>
-          </a>
-        <?php endforeach; ?>
-      <?php endforeach; ?>
-    </nav>
-
-    <div class="admin-sidebar-foot">
-      <a href="<?= BASE_URL ?>/index.php"><i class="bi bi-box-arrow-left"></i> Ke Situs Utama</a>
-      <a href="<?= BASE_URL ?>/logout.php"><i class="bi bi-power"></i> Keluar</a>
-    </div>
-  </aside>
-
+<body>
+<div class="admin-wrap">
+  <div class="admin-sidebar">
+    <div class="brand"><i class="bi bi-book-half"></i> E-Library Admin</div>
+    <a href="<?= BASE_URL ?>/admin/dashboard.php" class="<?= $current === 'dashboard.php' ? 'active' : '' ?>"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a href="<?= BASE_URL ?>/admin/books.php" class="<?= $current === 'books.php' ? 'active' : '' ?>"><i class="bi bi-journal-bookmark"></i> Semua Buku</a>
+    <a href="<?= BASE_URL ?>/admin/book_form.php" class="<?= $current === 'book_form.php' ? 'active' : '' ?>"><i class="bi bi-plus-circle"></i> Tambah Buku</a>
+    <a href="<?= BASE_URL ?>/admin/bookmarklet.php" class="<?= $current === 'bookmarklet.php' ? 'active' : '' ?>"><i class="bi bi-bookmark-star"></i> Bookmarklet (Clip 1-Klik)</a>
+    <a href="<?= BASE_URL ?>/admin/import_official.php" class="<?= $current === 'import_official.php' ? 'active' : '' ?>"><i class="bi bi-bank"></i> Import Resmi (Kemendikdasmen)</a>
+    <a href="<?= BASE_URL ?>/admin/import_books.php" class="<?= $current === 'import_books.php' ? 'active' : '' ?>"><i class="bi bi-cloud-download"></i> Import Buku (Google Books)</a>
+    <a href="<?= BASE_URL ?>/admin/bulk_import.php" class="<?= $current === 'bulk_import.php' ? 'active' : '' ?>"><i class="bi bi-cloud-arrow-down"></i> Bulk Import (Google Books)</a>
+    <a href="<?= BASE_URL ?>/admin/import_csv.php" class="<?= $current === 'import_csv.php' ? 'active' : '' ?>"><i class="bi bi-filetype-csv"></i> Import CSV</a>
+    <a href="<?= BASE_URL ?>/admin/categories.php" class="<?= $current === 'categories.php' ? 'active' : '' ?>"><i class="bi bi-tags"></i> Kategori</a>
+    <a href="<?= BASE_URL ?>/admin/users.php" class="<?= $current === 'users.php' ? 'active' : '' ?>"><i class="bi bi-people"></i> Pengguna</a>
+    <hr style="border-color:#333">
+    <a href="<?= BASE_URL ?>/index.php"><i class="bi bi-box-arrow-left"></i> Ke Situs Utama</a>
+    <a href="<?= BASE_URL ?>/logout.php"><i class="bi bi-power"></i> Keluar</a>
+  </div>
   <div class="admin-main">
-    <div class="admin-topbar">
-      <div class="d-flex align-items-center gap-3 min-w-0">
-        <button class="admin-menu-toggle" id="adminMenuToggle" type="button" aria-label="Buka menu">
-          <i class="bi bi-list fs-5"></i>
-        </button>
-        <div class="min-w-0">
-          <div class="crumb">Admin / <?= htmlspecialchars(admin_page_title($current)) ?></div>
-          <h1 class="text-truncate"><?= isset($page_title) ? htmlspecialchars($page_title) : 'Dashboard' ?></h1>
-        </div>
-      </div>
-
-      <form action="<?= BASE_URL ?>/admin/books.php" method="get" class="admin-topbar-search">
-        <i class="bi bi-search"></i>
-        <input type="text" name="q" placeholder="Cari buku di katalog admin...">
-      </form>
-
-      <div class="admin-user">
-        <div class="who">
-          <strong><?= htmlspecialchars($user['name']) ?></strong>
-          <span><?= htmlspecialchars($user['role']) ?></span>
-        </div>
-        <div class="avatar"><?= htmlspecialchars($initial) ?></div>
-      </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="mb-0"><?= isset($page_title) ? htmlspecialchars($page_title) : 'Dashboard' ?></h4>
+      <span class="text-muted small">Masuk sebagai <?= htmlspecialchars($user['name']) ?></span>
     </div>
-
-    <div class="admin-content">

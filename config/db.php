@@ -16,6 +16,19 @@ define('UPLOAD_BOOK_DIR', __DIR__ . '/../uploads/books/');
 define('UPLOAD_COVER_URL', BASE_URL . '/uploads/covers/');
 define('UPLOAD_BOOK_URL', BASE_URL . '/uploads/books/');
 
+// =====================================================
+// Konfigurasi SMTP — untuk verifikasi email & lupa password.
+// Kosongkan SMTP_USER kalau belum mau pakai email asli:
+// sistem otomatis tampilkan link verifikasi/reset di layar (mode lokal/dev).
+// Contoh pakai Gmail: aktifkan "App Password" di akun Google kamu,
+// isi SMTP_USER dengan email Gmail, SMTP_PASS dengan App Password (16 digit).
+// =====================================================
+define('SMTP_HOST', '');           // contoh: 'smtp.gmail.com'
+define('SMTP_PORT', 465);          // 465 = SSL, 587 = TLS
+define('SMTP_USER', '');           // contoh: 'namamu@gmail.com'
+define('SMTP_PASS', '');           // App Password, BUKAN password akun biasa
+define('SMTP_FROM_NAME', 'Pamulihan E-Library');
+
 try {
     $pdo = new PDO(
         "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
