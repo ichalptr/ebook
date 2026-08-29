@@ -69,9 +69,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'impor
 
     $books = cache_get('text_books', fn() => fetch_json('text_books.json'));
     $checkStmt = $pdo->prepare("SELECT id FROM books WHERE external_id = :ext");
+    // Sumber ditandai 'kemendikdasmen' (bukan 'manual') supaya kolom "Sumber" di
+    // Semua Buku bisa nunjukin asal data yang akurat — sebelumnya proses otomatis
+    // ini ke-tag 'manual' karena ENUM `source` belum punya slot untuk ini.
     $insertStmt = $pdo->prepare("INSERT INTO books (title, author, publisher, year_published, isbn,
         description, grade_level, category_id, cover_image, source, external_id)
-        VALUES (:t, :a, :pub, :y, :isbn, :d, :g, :c, :cov, 'manual', :ext)");
+        VALUES (:t, :a, :pub, :y, :isbn, :d, :g, :c, :cov, 'kemendikdasmen', :ext)");
 
     $ids = $_POST['book_ids'] ?? [];
     foreach ($ids as $bookId) {
@@ -135,7 +138,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($selectedLevel || $selectedSubjectK
 
   <?php if ($importMsg): ?>
     <div class="alert alert-success"><?= htmlspecialchars($importMsg) ?></div>
-    <a href="<?= BASE_URL ?>/admin/books.php" class="btn btn-success btn-sm mb-3">Lihat Semua Buku</a>
+    <div class="d-flex gap-2 mb-3">
+      <?php if ($imported > 0): ?>
+        <a href="<?= BASE_URL ?>/admin/books.php?missing_file=1" class="btn btn-forest btn-sm">
+          <i class="bi bi-file-earmark-arrow-up"></i> Lengkapi PDF (<?= $imported ?> buku)
+        </a>
+      <?php endif; ?>
+      <a href="<?= BASE_URL ?>/admin/books.php" class="btn btn-outline-forest btn-sm">Lihat Semua Buku</a>
+    </div>
   <?php endif; ?>
 
   <form method="get" class="row g-2 mb-3">

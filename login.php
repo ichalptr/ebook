@@ -12,6 +12,7 @@ const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_MINUTES = 5;
 
 $error = '';
+$unverifiedEmail = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
     $email = trim($_POST['email'] ?? '');
@@ -73,7 +74,7 @@ require_once __DIR__ . '/includes/header.php';
   <?php if ($error): ?>
     <div class="alert alert-danger">
       <?= htmlspecialchars($error) ?>
-      <?php if (!empty($unverifiedEmail)): ?>
+      <?php if ($unverifiedEmail): ?>
         Cek email untuk link verifikasi, atau
         <a href="<?= BASE_URL ?>/resend_verification.php?email=<?= urlencode($unverifiedEmail) ?>">kirim ulang link verifikasi</a>.
       <?php endif; ?>

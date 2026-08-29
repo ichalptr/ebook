@@ -10,6 +10,7 @@ $log = [];
 $imported = 0;
 $skipped = 0;
 $failed = 0;
+$importedMissingPdf = 0;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'import_csv') {
     csrf_check();
@@ -26,10 +27,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'impor
             $header = array_map(fn($h) => strtolower(trim($h)), $header);
             $expected = ['title','author','publisher','year','isbn','description','grade_level','category','cover_url','pdf_url','downloadable'];
 
-            $checkStmt = $pdo->prepare("SELECT id FROM books WHERE title = :t AND (author = :a OR :a = '')");
+            // Fix: :a dipakai 2x di query asli (author = :a OR :a = '') memicu
+            // "SQLSTATE[HY093]: Invalid parameter number" di MySQL native prepared
+            // statement (PDO::ATTR_EMULATE_PREPARES => false di config/db.php).
+            // Solusi: beri nama placeholder terpisah utk tiap kemunculan, walau
+            // nilainya sama.
+            $checkStmt = $pdo->prepare("SELECT id FROM books WHERE title = :t AND (author = :a1 OR :a2 = '')");
+            // Sumber ditandai 'csv_import' (bukan 'manual') supaya kolom "Sumber" di
+            // Semua Buku bisa nunjukin ini hasil bulk-upload, bukan input satu-satu.
             $insertStmt = $pdo->prepare("INSERT INTO books (title, author, publisher, year_published, isbn,
                 description, grade_level, category_id, cover_image, file_path, is_downloadable, source)
-                VALUES (:t, :a, :pub, :y, :isbn, :d, :g, :c, :cov, :f, :dl, 'manual')");
+                VALUES (:t, :a, :pub, :y, :isbn, :d, :g, :c, :cov, :f, :dl, 'csv_import')");
 
             $rowNum = 1;
             while (($row = fgetcsv($handle)) !== false) {
@@ -46,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'impor
                 }
 
                 $author = trim($data['author'] ?? '');
-                $checkStmt->execute([':t' => $title, ':a' => $author]);
+                $checkStmt->execute([':t' => $title, ':a1' => $author, ':a2' => $author]);
                 if ($checkStmt->fetch()) {
                     $log[] = "⏭️ Baris $rowNum \"$title\" dilewati (judul+penulis sudah ada).";
                     $skipped++;
@@ -77,7 +85,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'impor
                     ':dl' => $downloadable,
                 ]);
                 $imported++;
-                $log[] = "✅ Baris $rowNum \"$title\" berhasil ditambahkan" . (!$categoryId && $categoryName ? " (kategori \"$categoryName\" tidak ditemukan, dikosongkan)" : "") . ".";
+                if (!$pdfUrl) $importedMissingPdf++;
+                $log[] = "✅ Baris $rowNum \"$title\" berhasil ditambahkan" . (!$categoryId && $categoryName ? " (kategori \"$categoryName\" tidak ditemukan, dikosongkan)" : "") . (!$pdfUrl ? " — belum ada link PDF." : "");
             }
             fclose($handle);
         }
@@ -114,11 +123,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'impor
     <div class="alert alert-success">
       <strong><?= $imported ?> buku berhasil ditambahkan</strong>,
       <?= $skipped ?> dilewati (duplikat), <?= $failed ?> gagal (data tidak lengkap).
+      <?php if ($importedMissingPdf > 0): ?>
+        <div class="mt-1"><?= $importedMissingPdf ?> di antaranya belum ada link PDF di kolom <code>pdf_url</code>.</div>
+      <?php endif; ?>
       <div class="mt-2 small" style="max-height:250px;overflow-y:auto;">
         <?php foreach ($log as $line): ?><div><?= htmlspecialchars($line) ?></div><?php endforeach; ?>
       </div>
     </div>
-    <a href="<?= BASE_URL ?>/admin/books.php" class="btn btn-success btn-sm mb-3">Lihat Semua Buku</a>
+    <div class="d-flex gap-2 mb-3">
+      <?php if ($importedMissingPdf > 0): ?>
+        <a href="<?= BASE_URL ?>/admin/books.php?missing_file=1" class="btn btn-forest btn-sm">
+          <i class="bi bi-file-earmark-arrow-up"></i> Lengkapi PDF (<?= $importedMissingPdf ?> buku)
+        </a>
+      <?php endif; ?>
+      <a href="<?= BASE_URL ?>/admin/books.php" class="btn btn-outline-forest btn-sm">Lihat Semua Buku</a>
+    </div>
   <?php endif; ?>
 
   <form method="post" enctype="multipart/form-data">

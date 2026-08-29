@@ -18,8 +18,8 @@ CREATE TABLE users (
     role ENUM('admin','teacher','student') NOT NULL DEFAULT 'student',
     school VARCHAR(150) DEFAULT NULL,
     grade_level VARCHAR(20) DEFAULT NULL,   -- SD/SMP/SMA/SMK
-    failed_attempts INT NOT NULL DEFAULT 0,     -- percobaan login gagal beruntun
-    locked_until TIMESTAMP NULL DEFAULT NULL,   -- akun terkunci sementara sampai waktu ini
+    failed_attempts INT NOT NULL DEFAULT 0,        -- percobaan login gagal beruntun
+    locked_until TIMESTAMP NULL DEFAULT NULL,      -- akun terkunci sementara sampai waktu ini
     email_verified_at TIMESTAMP NULL DEFAULT NULL, -- NULL = belum verifikasi email
     verification_token VARCHAR(64) DEFAULT NULL,
     reset_token VARCHAR(64) DEFAULT NULL,
@@ -53,8 +53,11 @@ CREATE TABLE books (
     cover_image VARCHAR(255) DEFAULT NULL,     -- path lokal atau URL cover
     file_path VARCHAR(255) DEFAULT NULL,       -- path PDF di uploads/books
     page_count INT DEFAULT 0,
-    source ENUM('manual','google_books','open_library') DEFAULT 'manual',
-    external_id VARCHAR(100) DEFAULT NULL,     -- id dari Google Books/Open Library
+    -- 'csv_import' & 'kemendikdasmen' ditambahkan supaya proses bulk/otomatis
+    -- tidak lagi ke-tag 'manual' (sebelumnya import_csv.php & import_official.php
+    -- terpaksa pakai 'manual' karena ENUM ini belum punya slot untuk keduanya).
+    source ENUM('manual','google_books','open_library','csv_import','kemendikdasmen') DEFAULT 'manual',
+    external_id VARCHAR(100) DEFAULT NULL,     -- id dari Google Books/Open Library/SIPLah
     is_downloadable TINYINT(1) DEFAULT 0,
     views INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

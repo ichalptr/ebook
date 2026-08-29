@@ -4,10 +4,10 @@
  * Sesuaikan kredensial di bawah dengan environment kamu (XAMPP/Laragon/hosting).
  */
 
-define('DB_HOST', 'localhost:3306');
+define('DB_HOST', 'localhost:3311');
 define('DB_NAME', 'pamulihan_elibrary');
 define('DB_USER', 'root');
-define('DB_PASS', 'Sandi12@');
+define('DB_PASS', '');
 
 // Path dasar untuk upload (dipakai di admin & reader)
 define('BASE_URL', 'http://localhost/ebook');
